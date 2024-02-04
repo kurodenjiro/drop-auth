@@ -5,11 +5,12 @@ import { sha256 } from 'js-sha256';
 import BN from 'bn.js';
 import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
+import BN from "bn.js";
 
 export const CLAIM = 3177899144;
 
 const {
-  addKey, functionCallAccessKey, fullAccessKey, deleteKey,functionCall
+addKey, functionCallAccessKey, fullAccessKey, deleteKey , functionCall
 } = actionCreators;
 
 const hashToken = (oidcToken: string): number[] => {
@@ -153,3 +154,41 @@ export const verifyMpcSignature = (mpcSignature: string, originalSignature: stri
   const hashedData = new Uint8Array(sha256.array(serializedData));
   return network.fastAuth.mpcPublicKey.verify(hashedData, mpcSignatureBytes);
 };
+
+
+const gas = "300000000000000";
+const deposit = "50000000000000000000000";
+
+export const syncProfile = ({
+  accountId,
+  accountName,
+  accountUser,
+  accountPicProfile
+}): [Action] => [
+  functionCall(
+  "set",
+  {
+    data: {
+      [accountId]: {
+          profile: {
+              name:  accountName,
+              description: "MPC sync with ",
+              linktree: {
+                  gmail: accountUser,
+              },
+              image: {
+                ipfs_cid: accountPicProfile
+              },
+              tags: {
+                dropauth: "",
+                near: "",
+                wallet: ""
+              }
+            }
+        }
+    }
+  
+  },
+  new BN(gas),
+  new BN(deposit))
+];

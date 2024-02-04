@@ -19,8 +19,7 @@ import type { KeyStore } from '@near-js/keystores';
 import { Account } from '@near-js/accounts';
 import { InMemorySigner } from '@near-js/signers';
 import {
-  getAddKeyAction, getAddLAKAction,
-  synprofile,
+  getAddKeyAction, getAddLAKAction , syncProfile
 } from '../../utils/mpc-service';
 import FastAuthController from '../../lib/controller';
 import BN from 'bn.js';
@@ -32,7 +31,7 @@ const provider = new GoogleAuthProvider();
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
-    prompt : "select_account "
+    prompt : "select_account"
 });
 export const signInWithGooglePopup = () => signInWithPopup(firebaseAuth, provider);
 
@@ -70,36 +69,18 @@ const onCreateAccount = async ({
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
-
-  // Add device
-  await window.firestoreController.addDeviceCollection({
-    fakPublicKey: publicKeyFak,
-    lakPublicKey: public_key_lak,
-    gateway,
-  });
-
-  setStatusMessage('Account created successfully!');
-
-  // TODO: Check if account ID matches the one from email
-
-  if (publicKeyFak) {
-    window.localStorage.setItem('webauthn_username', email);
-  }
-
-  setStatusMessage('Redirecting to app...');
-
-  await onSignIn({
-    accessToken,
-    publicKeyFak,
-    public_key_lak,
-    contract_id,
-    methodNames,
-    setStatusMessage,
-    email,
-    gateway,
-    navigate
-  })
-
+    await onSignIn({
+      accessToken,
+      publicKeyFak,
+      public_key_lak,
+      contract_id,
+      methodNames,
+      setStatusMessage,
+      email,
+      gateway,
+      navigate
+    })
+  };
   
   
   //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -168,39 +149,72 @@ export const onSignIn = async ({
       allowance:         new BN('250000000000000'),
     });
 
-  return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-    oidcToken: accessToken,
-    accountId: accountIds[0],
-    recoveryPK,
-    actions:   addKeyActions
-  })
-    .then((res) => res.json())
-    .then(async (res) => {
-      const failure = res['Receipts Outcome']
-        .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-      if (failure?.ActionError?.kind?.LackBalanceForState) {
-        //navigate(`/devices?${searchParams.toString()}`);
-      } else {
-        await checkFirestoreReady();
-        if (!window.firestoreController) {
-          (window as any).firestoreController = new FirestoreController();
-        }
-        await window.firestoreController.addDeviceCollection({
-          fakPublicKey: onlyAddLak ? null : publicKeyFak,
-          lakPublicKey: public_key_lak,
-          gateway,
+   // onlyAddLak will be true if current browser already has a FAK with passkey
+   const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
+   const addKeyActions = onlyAddLak
+     ? getAddLAKAction({
+       publicKeyLak: public_key_lak,
+       contractId:   contract_id,
+       methodNames,
+       allowance:    new BN('250000000000000'),
+     }) : getAddKeyAction({
+       publicKeyLak:      public_key_lak,
+       webAuthNPublicKey: publicKeyFak,
+       contractId:        contract_id,
+       methodNames,
+       allowance:         new BN('250000000000000'),
+     });
+ 
+   return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+     oidcToken: accessToken,
+     accountId: accountIds[0],
+     recoveryPK,
+     actions:   addKeyActions
+   })
+     .then((res) => res.json())
+     .then(async (res) => {
+       const failure = res['Receipts Outcome']
+         .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+       if (failure?.ActionError?.kind?.LackBalanceForState) {
+         //navigate(`/devices?${searchParams.toString()}`);
+       } else {
+         await checkFirestoreReady();
+         if (!window.firestoreController) {
+           (window as any).firestoreController = new FirestoreController();
+         }
+         await window.firestoreController.addDeviceCollection({
+           fakPublicKey: onlyAddLak ? null : publicKeyFak,
+           lakPublicKey: public_key_lak,
+           gateway,
+         });
+ 
+         setStatusMessage('Account recovered successfully!');
+ 
+         if (publicKeyFak) {
+           window.localStorage.setItem('webauthn_username', email);
+         }
+         const syncActions = syncProfile({
+          accountId:   "",
+          accountName: "",
+          accountUser:        "",
+          accountPicProfile : ""
         });
+   
 
-        setStatusMessage('Account recovered successfully!');
+        (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+          oidcToken: accessToken,
+          accountId: accountIds[0],
+          recoveryPK,
+          actions: syncActions
+        })
+          .then((res) => res.json())
+          .then(async (res) => {
+            setStatusMessage('done');
+          })
 
-        if (publicKeyFak) {
-          window.localStorage.setItem('webauthn_username', email);
-        }
-
-        setStatusMessage('done');
-        navigate(0)
-      }
-    });
+         
+       }
+     });
 };
 
 const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
@@ -287,8 +301,12 @@ function LoginWithSocialAuth() {
     await firebaseAuth.signOut();
     // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
     window.localStorage.removeItem('webauthn_username');
+    window.fastAuthController.clearUser().then(() => {
+    });
     navigate(0)
   }
+
+
   const signInWithGoogle = async () => {
     try {
       const {user} = await signInWithGooglePopup();
@@ -300,10 +318,13 @@ function LoginWithSocialAuth() {
       publicKeyFak = keyPair.getPublicKey().toString();
       const email = user.email;
       //console.log("accesstoken",accessToken)
-      const accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
+      const success_url = window.location.origin;
+      let accountId = "" // user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
       const methodNames = "set";
       const contract_id = "v1.social08.testnet"
       const public_key_lak = null;
+      let isRecovery = true;
+      const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
       //console.log("acc",accountId)
       const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
         .then((res) => res.json())
@@ -312,73 +333,42 @@ function LoginWithSocialAuth() {
           captureException(err);
           throw new Error('Unable to retrieve account Id');
         });
-    
-      if (!accountIds.length) {
-        const isAvailable = await checkIsAccountAvailable(accountId);
-        const gateway = window.location.origin;
-        console.log("isAvailable",accountId,isAvailable);
-        if(!isAvailable){
-            window.fastAuthController = new FastAuthController({
-              accountId,
-              networkId
-            })
-              // claim the oidc token
-              console.log("LOGIN");
-              if (!window.fastAuthController.getAccountId()) {
-                await window.fastAuthController.setAccountId(accountId);
-              }
-              await window.fastAuthController.setKey(keyPair);
-              await window.fastAuthController.claimOidcToken(accessToken);
-              //const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-              window.firestoreController = new FirestoreController();
-              window.firestoreController.updateUser({
-                userUid:   user.uid,
-                oidcToken: accessToken,
-              });
-
-              await onSignIn({
-                accessToken,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                setStatusMessage,
-                email,
-                gateway,
-                navigate
-              })
+       if (!accountIds.length) {
+        isRecovery = false
+       }
+       if(isRecovery){
+        accountId = accountIds[0]
+        
+       }
+       if(!isRecovery){
+        //check exist account . if not exist then create . if exist create another account
+        const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+        if(isAvailable){
+          accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
         }else{
-          const isRecovery = false;
-          const success_url = window.location.origin;
-
-          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-
-          // claim the oidc token
-          window.fastAuthController = new FastAuthController({
-            accountId,
-            networkId
-          });
-
-          let publicKeyFak: string;
-
-          if (await isPassKeyAvailable()) {
-            const keyPair = await createKey(email);
-            publicKeyFak = keyPair.getPublicKey().toString();
-            await window.fastAuthController.setKey(keyPair);
+          const accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+        }
+        
+       }
+      // if account in mpc then recovery 
+      // if account not exist then create new account
+      if(isRecovery){
+        await onSignIn(
+          {
+            accessToken,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            setStatusMessage,
+            email,
+            navigate,
+            gateway:success_url,
           }
-
-          if (!window.fastAuthController.getAccountId()) {
-            await window.fastAuthController.setAccountId(accountId);
-          }
-
-          await window.fastAuthController.claimOidcToken(accessToken);
-          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          window.firestoreController = new FirestoreController();
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            oidcToken: accessToken,
-          });
-          await onCreateAccount({
+        )
+      }else{
+        await  onCreateAccount(
+          {
             oidcKeypair,
             accessToken,
             accountId,
@@ -389,13 +379,13 @@ function LoginWithSocialAuth() {
             success_url,
             setStatusMessage,
             email,
+            navigate,
             gateway:success_url,
-            navigate
-          });
-        }
+          }
+        )
       }
-      
-  
+
+
   
     } catch (error) {
       console.log('error', error);
