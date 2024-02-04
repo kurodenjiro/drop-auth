@@ -102,11 +102,13 @@ export const createNEARAccount = async ({
     body:    JSON.stringify(data),
     headers: new Headers({ 'Content-Type': 'application/json' }),
   };
+  console.log("data",data)
 
   const response = await fetch(`${network.fastAuth.mpcRecoveryUrl}/new_account`, options);
-  if (!response?.ok) {
-    throw new Error('Network response was not ok');
-  }
+  // if (!response?.ok) {
+  //   // throw new Error('Network response was not ok');
+  //   return response.json();
+  // }
 
   return response.json();
 };

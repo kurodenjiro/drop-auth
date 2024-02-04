@@ -2,14 +2,14 @@ import { PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
-
+import BN from 'bn.js';
 import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
 
 export const CLAIM = 3177899144;
 
 const {
-  addKey, functionCallAccessKey, fullAccessKey, deleteKey
+  addKey, functionCallAccessKey, fullAccessKey, deleteKey,functionCall
 } = actionCreators;
 
 const hashToken = (oidcToken: string): number[] => {
@@ -19,6 +19,7 @@ const hashToken = (oidcToken: string): number[] => {
 };
 
 export const convertToHex = (arr: Uint8Array): string => Buffer.from(arr).toString('hex');
+
 
 export const getUserCredentialsFrpSignature = ({
   salt, oidcToken, shouldHashToken, keypair
@@ -66,6 +67,41 @@ export const getSignRequestFrpSignature = ({
   const signature = keypair.sign(new Uint8Array(hash.arrayBuffer()));
   return convertToHex(signature.signature);
 };
+
+const gas = "300000000000000";
+const deposit = "50000000000000000000000";
+
+export const synprofile = ({
+  accountId,
+  methodNames,
+}): [Action] => [
+  functionCall(methodNames,
+  {
+    data: {
+      [accountId]: {
+          profile: {
+              name:  "vo huu nhan",
+              description: "",
+              linktree: {
+                  telegram: "",
+              },
+              image: {
+                ipfs_cid: ""
+              },
+              tags: {
+                dropwallet: "",
+                near: "",
+                genadrop: ""
+              }
+            }
+        }
+    }
+  
+  },
+  new BN(gas),
+  new BN(deposit))
+];
+
 
 export const getAddKeyAction = ({
   publicKeyLak,
