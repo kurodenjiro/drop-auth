@@ -9,12 +9,15 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { createNEARAccount } from '../../api';
 import FirestoreController from '../../lib/firestoreController';
-import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
-} from '../../utils';
+import { actionCreators } from "@near-js/transactions";
 import { basePath, network, networkId } from '../../utils/config';
 import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
+import { InMemoryKeyStore } from "@near-js/keystores";
+import { JsonRpcProvider } from '@near-js/providers';
+import type { KeyStore } from '@near-js/keystores';
+import { Account } from '@near-js/accounts';
+import { InMemorySigner } from '@near-js/signers';
 import {
   getAddKeyAction, getAddLAKAction , syncProfile
 } from '../../utils/mpc-service';
@@ -47,7 +50,7 @@ const onCreateAccount = async ({
   gateway,
   navigate
 }) => {
-  const res = await createNEARAccount({
+  await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
     limitedAccessKeys: public_key_lak ? [{
@@ -60,29 +63,12 @@ const onCreateAccount = async ({
     oidcKeypair,
   });
 
-  if (res.type === 'err'){
-    if (!window.firestoreController) {
-      window.firestoreController = new FirestoreController();
-    }
-  
-    // Add device
-    await window.firestoreController.addDeviceCollection({
-      fakPublicKey: publicKeyFak,
-      lakPublicKey: public_key_lak,
-      gateway,
-    });
-  
-    setStatusMessage('Account created successfully!');
-  
-    // TODO: Check if account ID matches the one from email
-  
-    if (publicKeyFak) {
-      window.localStorage.setItem('webauthn_username', email);
-    }
-  
-    setStatusMessage('Redirecting to app...');
-
-    
+  // if (res.type === 'err'){
+  //   throw Error("Error res")   
+  // };
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
     await onSignIn({
       accessToken,
       publicKeyFak,
@@ -95,7 +81,6 @@ const onCreateAccount = async ({
       navigate
     })
   };
-
   
   
   //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -144,6 +129,25 @@ export const onSignIn = async ({
   // const deleteKeyActions = existingDevice
   //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
 
+  // onlyAddLak will be true if current browser already has a FAK with passkey
+  const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
+  // const action = synprofile({
+  //   accountId:accountIds[0],
+  //   methodNames:"set",
+  // })
+  const addKeyActions = onlyAddLak
+    ? getAddLAKAction({
+      publicKeyLak: public_key_lak,
+      contractId:   contract_id,
+      methodNames,
+      allowance:    new BN('250000000000000'),
+    }) : getAddKeyAction({
+      publicKeyLak:      public_key_lak,
+      webAuthNPublicKey: publicKeyFak,
+      contractId:        contract_id,
+      methodNames,
+      allowance:         new BN('250000000000000'),
+    });
 
    // onlyAddLak will be true if current browser already has a FAK with passkey
    const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
@@ -259,6 +263,36 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+export const connect = async (accountId: string, keyStore: KeyStore, network = 'mainnet'): Promise<Account> => {
+  const provider = new JsonRpcProvider({
+    url: network == 'mainnet' ? 'https://rpc.mainnet.near.org' : 'https://rpc.testnet.near.org',
+  });
+
+  const signer = new InMemorySigner(keyStore);
+
+  return new Account(
+    {
+      networkId: network,
+      provider,
+      signer,
+      jsvmAccountId: '',
+    },
+    accountId,
+  );
+};
+
+const instatiateAccount = async (network: string, accountName: string, pk: string) => {
+  const relayerKeyStore = await authenticatedKeyStore(network, accountName, pk);
+
+  return await connect(accountName, relayerKeyStore, network);
+};
+const authenticatedKeyStore = async (network: string, account: string, pk: string): Promise<KeyStore> => {
+  const keyStore = new InMemoryKeyStore();
+  await keyStore.setKey(network, account, KeyPair.fromString(pk));
+
+  return keyStore;
+};
+
 function LoginWithSocialAuth() {
   const navigate = useNavigate();
   const { authenticated } = useAuthState();
@@ -299,7 +333,6 @@ function LoginWithSocialAuth() {
           captureException(err);
           throw new Error('Unable to retrieve account Id');
         });
-       
        if (!accountIds.length) {
         isRecovery = false
        }
