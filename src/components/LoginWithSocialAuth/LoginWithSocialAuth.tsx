@@ -80,7 +80,7 @@ const onCreateAccount = async ({
       gateway,
       navigate
     })
-  };
+  
   
   
   //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
