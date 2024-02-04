@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useEffect ,useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useRoutes, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 import { LoginWrapper } from './LoginWithSocialAuth.style';
 import { Button } from '../../lib/Button';
@@ -13,7 +13,6 @@ import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
-import { createKey } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 import {
@@ -26,7 +25,7 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { useAuthState } from '../../lib/useAuthState';
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
-
+import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
     prompt : "select_account "
@@ -46,6 +45,7 @@ const onCreateAccount = async ({
   setStatusMessage,
   email,
   gateway,
+  navigate
 }) => {
   const res = await createNEARAccount({
     accountId,
@@ -60,40 +60,55 @@ const onCreateAccount = async ({
     oidcKeypair,
   });
 
-  if (res.type === 'err') return;
+  if (res.type === 'err'){
+    if (!window.firestoreController) {
+      window.firestoreController = new FirestoreController();
+    }
+  
+    // Add device
+    await window.firestoreController.addDeviceCollection({
+      fakPublicKey: publicKeyFak,
+      lakPublicKey: public_key_lak,
+      gateway,
+    });
+  
+    setStatusMessage('Account created successfully!');
+  
+    // TODO: Check if account ID matches the one from email
+  
+    if (publicKeyFak) {
+      window.localStorage.setItem('webauthn_username', email);
+    }
+  
+    setStatusMessage('Redirecting to app...');
 
-  if (!window.firestoreController) {
-    window.firestoreController = new FirestoreController();
-  }
+    await onSignIn({
+      accessToken,
+      publicKeyFak,
+      public_key_lak,
+      contract_id,
+      methodNames,
+      setStatusMessage,
+      email,
+      gateway,
+      navigate
+    })
+  };
 
-  // Add device
-  await window.firestoreController.addDeviceCollection({
-    fakPublicKey: publicKeyFak,
-    lakPublicKey: public_key_lak,
-    gateway,
-  });
+  
+  
+  //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+  // const parsedUrl = new URL(
+  //   success_url && isUrlNotJavascriptProtocol(success_url)
+  //     ? success_url
+  //     : window.location.origin + (basePath ? `/${basePath}` : '')
+  // );
+  // parsedUrl.searchParams.set('account_id', res.near_account_id);
+  // parsedUrl.searchParams.set('public_key', public_key_lak);
+  // parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
-  setStatusMessage('Account created successfully!');
-
-  // TODO: Check if account ID matches the one from email
-
-  if (publicKeyFak) {
-    window.localStorage.setItem('webauthn_username', email);
-  }
-
-  setStatusMessage('Redirecting to app...');
-
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const parsedUrl = new URL(
-    success_url && isUrlNotJavascriptProtocol(success_url)
-      ? success_url
-      : window.location.origin + (basePath ? `/${basePath}` : '')
-  );
-  parsedUrl.searchParams.set('account_id', res.near_account_id);
-  parsedUrl.searchParams.set('public_key', public_key_lak);
-  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
-
-  window.location.replace(parsedUrl.href);
+  // window.location.replace(parsedUrl.href);
+  
 };
 
 export const onSignIn = async ({
@@ -105,7 +120,9 @@ export const onSignIn = async ({
   setStatusMessage,
   email,
   gateway,
+  navigate,
 }) => {
+  
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
     .then((res) => res.json())
@@ -114,6 +131,7 @@ export const onSignIn = async ({
       captureException(err);
       throw new Error('Unable to retrieve account Id');
     });
+
 
   if (!accountIds.length) {
     //creat wallet here
@@ -171,6 +189,7 @@ export const onSignIn = async ({
         }
 
         setStatusMessage('done');
+        navigate(0)
       }
     });
 };
@@ -189,7 +208,7 @@ const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean
         params:  {
           request_type: 'view_account',
           finality:     'final',
-          account_id:   `${desiredUsername}.${network.fastAuth.accountIdSuffix}`,
+          account_id:   `${desiredUsername}`,
         },
       }),
     });
@@ -222,21 +241,14 @@ const schema = yup.object().shape({
 });
 
 function LoginWithSocialAuth() {
-  const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [statusMessage, setStatusMessage] = useState('Loading...');
-  const [searchParams] = useSearchParams();
   const { authenticated } = useAuthState();
-  useEffect(() => {
-    const handleAuthState = async () => {
-
-    }
-    handleAuthState()
-  }, []);
+  const [statusMessage, setStatusMessage] = useState<any>(authenticated&&"");
   const logout = async () => {
     await firebaseAuth.signOut();
     // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
     window.localStorage.removeItem('webauthn_username');
+    navigate(0)
   }
   const signInWithGoogle = async () => {
     try {
@@ -248,42 +260,101 @@ function LoginWithSocialAuth() {
       const keyPair = KeyPair.fromRandom('ed25519');
       publicKeyFak = keyPair.getPublicKey().toString();
       const email = user.email;
-      const accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+      //console.log("accesstoken",accessToken)
+      const accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
       const methodNames = "";
       const contract_id = "v1.social08.testnet"
       const public_key_lak = null;
-      const isAvailable = await checkIsAccountAvailable(accountId);
-      const gateway = window.location.origin;
-      console.log("isAvailable",accountId,isAvailable);
-      if(isAvailable){
-            // claim the oidc token
+      //console.log("acc",accountId)
+      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
+        .then((res) => res.json())
+        .catch((err) => {
+          console.log(err);
+          captureException(err);
+          throw new Error('Unable to retrieve account Id');
+        });
+    
+      if (!accountIds.length) {
+        const isAvailable = await checkIsAccountAvailable(accountId);
+        const gateway = window.location.origin;
+        console.log("isAvailable",accountId,isAvailable);
+        if(!isAvailable){
             window.fastAuthController = new FastAuthController({
               accountId,
               networkId
-            });
-            console.log("hello");
-            if (!window.fastAuthController.getAccountId()) {
-              await window.fastAuthController.setAccountId(accountId);
-            }
-            await window.fastAuthController.setKey(keyPair);
-            await window.fastAuthController.claimOidcToken(accessToken);
-            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-            window.firestoreController = new FirestoreController();
-            window.firestoreController.updateUser({
-              userUid:   user.uid,
-              oidcToken: accessToken,
-            });
-            await onSignIn({
-              accessToken,
-              publicKeyFak,
-              public_key_lak,
-              contract_id,
-              methodNames,
-              setStatusMessage,
-              email,
-              gateway,
             })
+              // claim the oidc token
+              console.log("LOGIN");
+              if (!window.fastAuthController.getAccountId()) {
+                await window.fastAuthController.setAccountId(accountId);
+              }
+              await window.fastAuthController.setKey(keyPair);
+              await window.fastAuthController.claimOidcToken(accessToken);
+              //const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+              window.firestoreController = new FirestoreController();
+              window.firestoreController.updateUser({
+                userUid:   user.uid,
+                oidcToken: accessToken,
+              });
+              await onSignIn({
+                accessToken,
+                publicKeyFak,
+                public_key_lak,
+                contract_id,
+                methodNames,
+                setStatusMessage,
+                email,
+                gateway,
+                navigate
+              })
+        }else{
+          const isRecovery = false;
+          const success_url = window.location.origin;
+
+          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+
+          // claim the oidc token
+          window.fastAuthController = new FastAuthController({
+            accountId,
+            networkId
+          });
+
+          let publicKeyFak: string;
+
+          if (await isPassKeyAvailable()) {
+            const keyPair = await createKey(email);
+            publicKeyFak = keyPair.getPublicKey().toString();
+            await window.fastAuthController.setKey(keyPair);
+          }
+
+          if (!window.fastAuthController.getAccountId()) {
+            await window.fastAuthController.setAccountId(accountId);
+          }
+
+          await window.fastAuthController.claimOidcToken(accessToken);
+          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+          window.firestoreController = new FirestoreController();
+          window.firestoreController.updateUser({
+            userUid:   user.uid,
+            oidcToken: accessToken,
+          });
+          await onCreateAccount({
+            oidcKeypair,
+            accessToken,
+            accountId,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            success_url,
+            setStatusMessage,
+            email,
+            gateway:success_url,
+            navigate
+          });
+        }
       }
+      
   
   
     } catch (error) {
@@ -298,17 +369,20 @@ function LoginWithSocialAuth() {
       <div >
         <header>
           <h1 data-test-id="heading_login">Log In With Google</h1>
-          <p className="desc">Please enter your email</p>
         </header>
         {authenticated ? 
         (
         <div>
-        <p>signed in</p>
-        <button onClick={logout}>Logout</button>
+        <h3 className='text-2xl font-semibold'>signed in</h3>
+        <button className='px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150' onClick={logout}>Logout</button>
         </div>
         )
         
-        : <button onClick={signInWithGoogle}>Login with Google</button>
+        : <div className="flex items-center justify-center h-screen dark:bg-gray-800">
+              <button onClick={signInWithGoogle} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+                  <span>Login with Google</span>
+              </button>
+          </div>
         
         }
         
