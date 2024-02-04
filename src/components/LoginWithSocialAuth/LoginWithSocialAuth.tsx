@@ -80,7 +80,7 @@ const onCreateAccount = async ({
       gateway,
       navigate
     })
-  };
+  
   
   
   //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -129,25 +129,6 @@ export const onSignIn = async ({
   // const deleteKeyActions = existingDevice
   //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
 
-  // onlyAddLak will be true if current browser already has a FAK with passkey
-  const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
-  // const action = synprofile({
-  //   accountId:accountIds[0],
-  //   methodNames:"set",
-  // })
-  const addKeyActions = onlyAddLak
-    ? getAddLAKAction({
-      publicKeyLak: public_key_lak,
-      contractId:   contract_id,
-      methodNames,
-      allowance:    new BN('250000000000000'),
-    }) : getAddKeyAction({
-      publicKeyLak:      public_key_lak,
-      webAuthNPublicKey: publicKeyFak,
-      contractId:        contract_id,
-      methodNames,
-      allowance:         new BN('250000000000000'),
-    });
 
    // onlyAddLak will be true if current browser already has a FAK with passkey
    const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
