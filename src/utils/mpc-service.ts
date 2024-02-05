@@ -2,7 +2,6 @@ import { PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
-import BN from 'bn.js';
 import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
 
