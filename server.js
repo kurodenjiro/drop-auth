@@ -5,7 +5,7 @@ const cors = require("cors")
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({limit: '50mb'}));
 
 const connect_string = "mongodb+srv://louisdevzz04:vohuunhan1310@cluster0.zmwbg2i.mongodb.net/dropauth?retryWrites=true&w=majority"
 const dataSchema = new mongoose.Schema({
@@ -25,9 +25,15 @@ const dataSchema = new mongoose.Schema({
         required: true,
         type: String
     },
+    backgroundCover:{
+        type: String
+    },
     link:{
         required: true,
         type: Array
+    },
+    timezone:{
+        type:String,
     },
     amount:{
         required: true,
@@ -58,7 +64,9 @@ app.post("/api/dropauth/postData",async(req,res,next)=>{
         description: req.body.description,
         start: req.body.start,
         end: req.body.end,
+        backgroundCover:req.body.backgroundCover,
         link: req.body.link,
+        timezone: req.body.timezone,
         amount: req.body.amount
     }) 
     try{

@@ -290,6 +290,33 @@ function LoginWithSocialAuth() {
   const [link, setLink] = useState([]);
   const [amount, setAmount] = useState("");
   const [select, setSelect] = useState("");
+  const [timezone, setTimeZone] = useState("");
+  const [defaultLink, setDefaultLink] = useState("");
+
+  useEffect(()=>{
+    if(select=="like"){
+      //https://twitter.com/0_bishi_7/status/1754587117966008752
+      let tweet_id = defaultLink.split("/")[5]
+      let username =  defaultLink.split("/")[3]
+      //console.log("tw",tweet_id)
+      setLink(l=>l.concat({
+        title:`Like @${username} Tweet`,
+        link:`https://twitter.com/intent/like?tweet_id=${tweet_id}`
+      }))
+    }else if(select=="follow"){
+      let screen_name = defaultLink.split("/")[3]
+      setLink(l=>l.concat({
+        title: `Follow @${screen_name} on Twitter`,
+        link: `https://twitter.com/intent/follow?screen_name=${screen_name}`
+      }))
+    }else if(select == "retweet"){
+      let tweet_id = defaultLink.split("/")[5]
+      setLink(l=>l.concat({
+        title:`Retweet the Tweet`,
+        link:`https://twitter.com/intent/retweet?tweet_id=${tweet_id}`
+      }))
+    }
+  },[select])
 
   const logout = async () => {
     await firebaseAuth.signOut();
@@ -524,13 +551,14 @@ function LoginWithSocialAuth() {
   }
 
   const handleInsertData = () =>{
-
     axios.post('http://localhost:8080/api/dropauth/postData', {
       name: name,
       description: description,
       start: start,
       end: end,
+      backgroundCover: image,
       link: link,
+      timezone: timezone,
       amount: amount
     } )
     .then(function (response) {
@@ -541,18 +569,22 @@ function LoginWithSocialAuth() {
     });
   
   }
-
-  const onChangeLink = (e) =>{
-    if(select=="like"){
-      setLink(l=>l.concat(`https://twitter.com/intent/like?tweet_id=1752983766589722750`))
-    }else if(select=="follow"){
-      setLink(l=>l.concat(`https://twitter.com/intent/follow?screen_name=MagicBuildAI`))
-    }else if(select == "retweet"){
-      setLink(l=>l.concat(`https://twitter.com/intent/retweet?tweet_id=1752983766589722750`))
-    }
+  const handleSelect= (e:any) =>{
+    setSelect(e.target.value)
   }
+
+  const handleUpdateFile = (e:any) =>{
+    const data = new FileReader();
+    data.addEventListener('load',()=>{
+      setImage(data.result)
+    })
+    data.readAsDataURL(e.target.files[0])
+  }
+
+
 console.log(link)
 console.log(image)
+//console.log("set",select)
   return (
   <div className='background'>
   <nav className="navbar navbar-expand-lg bg-body-tertiary">
@@ -584,7 +616,7 @@ console.log(image)
                     <img
                     width={"100%"}
                     height={"400px"}
-                      src={URL.createObjectURL(image)}
+                      src={image}
                       alt="Thumb"
                     />
                   </div>
@@ -612,22 +644,22 @@ console.log(image)
                  <div>
                  <label className='text-white'>Start</label>
                   <div className="input-group">
-                    <input onChange={(e)=>setStart(e.target.value)} type="date" name="cardNumber" placeholder="Your card number" className="form-control" required/>
+                    <input onChange={(e)=>setStart(e.target.value)} type="date" name="cardNumber" className="form-control" required/>
                   </div>
                  </div>
                   <div>
                     <label className='text-white'>End</label>
                     <div className="input-group">
-                      <input onChange={(e)=>setEnd(e.target.value)} type="date" name="cardNumber" placeholder="Your card number" className="form-control" required/>
+                      <input onChange={(e)=>setEnd(e.target.value)} type="date" name="cardNumber" className="form-control" required/>
                     </div>
                   </div>
                   <div>
                   <label className='text-white'>Time Zone</label>
-                  <select className="form-select mt-2">
+                  <select onChange={(e)=>setTimeZone(e.target.value)} className="form-select mt-2">
                     <option selected>-- Select time zone --</option>
-                    <option value="like">UTC+07:00 (Indochina Time)</option>
-                    <option value="follow">UTC-11:00 (ST)</option>
-                    <option value="retweet">UTC-10:00 </option>
+                    <option value="UTC+07">UTC+07:00 (HCM Time)</option>
+                    <option value="UTC-11">UTC-11:00 (ST)</option>
+                    <option value="TC-10">UTC-10:00 </option>
                   </select>
                   </div>
                 </div>
@@ -635,7 +667,7 @@ console.log(image)
 
               <label className='mt-3 fs-6 text-white'>Upload cover</label>
               <div className="form-group mt border">
-                <input type="file" onChange={(e)=>setImage(e.target.files[0])}/>
+                <input type="file" onChange={handleUpdateFile}/>
               </div>
             </form>
             <h3 className='mt-3 fs-3 text-white'>Add Mission</h3>
@@ -644,10 +676,10 @@ console.log(image)
                 setElemnt(elment=>elment.concat(<div>
                   <div className="form-group mt-2">
                   <label className='mt-2 text-white fs-6'>Link</label>
-                  <input onChange={(e)=>onChangeLink(e)} type="text" name="username" placeholder="https://twitter.com/MagicBuildAI" required className="form-control"/>
+                  <input onChange={(e)=>setDefaultLink(e.target.value)} type="text" name="username" placeholder={"https://twitter.com/0_bishi_7/status/1754587117966008752"} required className="form-control"/>
                 </div>
                 <div className="form-group mt-2">
-                  <select onChange={(e)=>setSelect(e.target.value)} className="form-select">
+                  <select onChange={handleSelect} className="form-select">
                     <option selected>-- Select options --</option>
                     <option value="like">Like</option>
                     <option value="follow">Follow</option>

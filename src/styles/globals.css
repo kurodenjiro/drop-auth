@@ -185,3 +185,6 @@ html {
 .card-format:hover{
   color: black;
 }
+.nav-format{
+  padding: 0 80px !important;
+}

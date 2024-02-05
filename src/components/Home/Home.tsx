@@ -51,7 +51,7 @@ export default function Home(){
                 <div className="project-show ">
                     {data&&data.map((dt,i)=>(
                         <a href={`/Dashboard?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
-                            <img src="..." className="card-img-top" alt="..."/>
+                            <img src={dt.backgroundCover} className="card-img-top mt-2" alt="..."/>
                             <div className="card-body">
                                 <h3 className="card-title text-truncate">{dt.name}</h3>
                                 <p className="card-text">{text_truncate(dt.description,50,"...")}</p>
