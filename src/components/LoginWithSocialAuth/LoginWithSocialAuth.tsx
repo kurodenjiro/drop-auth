@@ -20,6 +20,10 @@ import BN from 'bn.js';
 import { openToast } from '../../lib/Toast';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { useAuthState } from '../../lib/useAuthState';
+import { actionCreators } from "@near-js/transactions";
+const {
+  functionCall
+  } = actionCreators;
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
@@ -356,18 +360,52 @@ function LoginWithSocialAuth() {
       accountUser:        "",
       accountPicProfile : ""
     });
-  
-  
-    (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-      oidcToken: accessToken,
-      accountId: accountIds[0],
-      recoveryPK,
-      actions: syncActions
+   
+    const gas = "300000000000000";
+    const deposit = "50000000000000000000000";
+    // (window as any).fastAuthController.signAndSendAddKey({
+    //   contractId :"v1.social08.testnet", 
+    //   methodNames:"", 
+    //   allowance:"250000000000000", 
+    //   publicKey:recoveryPK,
+    // })
+    (window as any).fastAuthController.signDelegateActionWhitelist({
+      receiverId :"v1.social08.testnet",
+      actions: [functionCall(
+        "set",
+        {
+          data: {
+            [""]: {
+                profile: {
+                    name:  "",
+                    description: "MPC sync with ",
+                    linktree: {
+                        gmail: "",
+                    },
+                    image: {
+                      ipfs_cid: ""
+                    },
+                    tags: {
+                      dropauth: "",
+                      near: "",
+                      wallet: ""
+                    }
+                  }
+              }
+          }
+        
+        },
+        new BN(gas),
+        new BN(deposit))
+        ]
     })
       .then((res) => res.json())
       .then(async (res) => {
         setStatusMessage('done');
       })
+
+
+      
   }
 
   return (

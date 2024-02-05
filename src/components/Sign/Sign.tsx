@@ -102,7 +102,7 @@ function Sign() {
 
     const transactionHashes = searchParams.get('transactions');
     try {
-      const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
+      const deserializedTransactions = deserializeTransactionsFromString(transactionHashes);
       const allActions = deserializedTransactions.flatMap((t) => t.actions);
       setTransactionDetails({
         signerId:    deserializedTransactions[0].signerId,

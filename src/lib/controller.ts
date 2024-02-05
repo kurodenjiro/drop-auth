@@ -165,6 +165,7 @@ class FastAuthController {
     this.assertValidSigner(signerId);
     let signedDelegate;
     try {
+      
       // webAuthN supported browser
       const account = new Account(this.connection, this.accountId);
       signedDelegate = await account.signedDelegate({
@@ -172,7 +173,8 @@ class FastAuthController {
         blockHeightTtl: 60,
         receiverId,
       });
-    } catch {
+      
+    } catch (e){
       // fallback, non webAuthN supported browser
       // @ts-ignore
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
@@ -347,6 +349,7 @@ class FastAuthController {
       receiverId:     accountId,
       senderId:       accountId,
     });
+
     const encodedDelegateAction = Buffer.from(serialize(SCHEMA, delegateAction)).toString('base64');
     const userCredentialsFrpSignature = getUserCredentialsFrpSignature({
       salt:            GET_USER_SALT,
@@ -354,6 +357,7 @@ class FastAuthController {
       shouldHashToken: false,
       keypair:         localKey,
     });
+    
     const signRequestFrpSignature = getSignRequestFrpSignature({
       salt:    GET_SIGNATURE_SALT,
       oidcToken,
@@ -393,6 +397,106 @@ class FastAuthController {
     });
   }
 
+  async signDelegateActionWhitelist({ receiverId, actions, signerId }) {
+    this.assertValidSigner(signerId);
+    let signedDelegate;
+    try {
+      
+      // webAuthN supported browser
+      const account = new Account(this.connection, this.accountId);
+      signedDelegate = await account.signedDelegate({
+        actions,
+        blockHeightTtl: 60,
+        receiverId,
+      });
+      
+    } catch (e){
+      // fallback, non webAuthN supported browser
+      // @ts-ignore
+      const oidcToken = await firebaseAuth.currentUser.getIdToken();
+      const recoveryPK = await this.getUserCredential(oidcToken);
+      // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
+      signedDelegate = await this.createSignedDelegateWithRecoveryKeyWhitelist({
+        oidcToken,
+        accountId: this.accountId,
+        receiverId,
+        actions,
+        recoveryPK,
+      }).catch((err) => {
+        console.log(err);
+        captureException(err);
+        throw new Error('Unable to sign delegate action');
+      });
+    }
+    return signedDelegate;
+  }
+  async createSignedDelegateWithRecoveryKeyWhitelist({
+    oidcToken,
+    accountId,
+    receiverId,
+    recoveryPK,
+    actions,
+  }) {
+    const GET_SIGNATURE_SALT = CLAIM + 3;
+    const GET_USER_SALT = CLAIM + 2;
+    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+
+    const { header } = await this.getBlock();
+    const delegateAction = buildDelegateAction({
+      actions,
+      maxBlockHeight: new BN(header.height).add(new BN(60)),
+      nonce:          await this.fetchNonce({ accountId, publicKey: recoveryPK }),
+      publicKey:      PublicKey.from(recoveryPK),
+      receiverId:     receiverId,
+      senderId:       accountId,
+    });
+
+    const encodedDelegateAction = Buffer.from(serialize(SCHEMA, delegateAction)).toString('base64');
+    const userCredentialsFrpSignature = getUserCredentialsFrpSignature({
+      salt:            GET_USER_SALT,
+      oidcToken,
+      shouldHashToken: false,
+      keypair:         localKey,
+    });
+    
+    const signRequestFrpSignature = getSignRequestFrpSignature({
+      salt:    GET_SIGNATURE_SALT,
+      oidcToken,
+      keypair: localKey,
+      delegateAction,
+    });
+
+    const payload = {
+      delegate_action:                encodedDelegateAction,
+      oidc_token:                     oidcToken,
+      frp_signature:                  signRequestFrpSignature,
+      user_credentials_frp_signature: userCredentialsFrpSignature,
+      frp_public_key:                 localKey.getPublicKey().toString(),
+    };
+
+    // https://github.com/near/mpc-recovery#sign
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/sign`, {
+      method:  'POST',
+      mode:    'cors' as const,
+      body:    JSON.stringify(payload),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        throw new Error('Unable to get signature');
+      }
+      const res = await response.json();
+      return res.signature;
+    }).then((signature) => {
+      const signatureObj = new Signature({
+        keyType: KeyType.ED25519,
+        data:    Buffer.from(signature, 'hex'),
+      });
+      return new SignedDelegate({
+        delegateAction,
+        signature: signatureObj,
+      });
+    });
+  }
   async signAndSendActionsWithRecoveryKey({
     oidcToken,
     accountId,
