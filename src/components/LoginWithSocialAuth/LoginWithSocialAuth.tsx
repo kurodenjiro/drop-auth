@@ -50,7 +50,8 @@ const onCreateAccount = async ({
   gateway,
   navigate
 }) => {
-  await createNEARAccount({
+  console.log("oidcKeypair",oidcKeypair)
+  const res = await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
     limitedAccessKeys: public_key_lak ? [{
@@ -62,13 +63,31 @@ const onCreateAccount = async ({
     accessToken,
     oidcKeypair,
   });
+  if (res.type === 'err') return;
 
-  // if (res.type === 'err'){
-  //   throw Error("Error res")   
-  // };
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
+
+  // Add device
+  await window.firestoreController.addDeviceCollection({
+    fakPublicKey: publicKeyFak,
+    lakPublicKey: public_key_lak,
+    gateway,
+  });
+
+  setStatusMessage('Account created successfully!');
+
+  // TODO: Check if account ID matches the one from email
+
+  if (publicKeyFak) {
+    window.localStorage.setItem('webauthn_username', email);
+  }
+
+  setStatusMessage('Redirecting to app...');
+
+  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+
     await onSignIn({
       accessToken,
       publicKeyFak,
@@ -262,17 +281,8 @@ export const connect = async (accountId: string, keyStore: KeyStore, network = '
   );
 };
 
-const instatiateAccount = async (network: string, accountName: string, pk: string) => {
-  const relayerKeyStore = await authenticatedKeyStore(network, accountName, pk);
 
-  return await connect(accountName, relayerKeyStore, network);
-};
-const authenticatedKeyStore = async (network: string, account: string, pk: string): Promise<KeyStore> => {
-  const keyStore = new InMemoryKeyStore();
-  await keyStore.setKey(network, account, KeyPair.fromString(pk));
 
-  return keyStore;
-};
 
 function LoginWithSocialAuth() {
   const navigate = useNavigate();
@@ -297,6 +307,7 @@ function LoginWithSocialAuth() {
       let publicKeyFak: string;
       const keyPair = KeyPair.fromRandom('ed25519');
       publicKeyFak = keyPair.getPublicKey().toString();
+      await window.fastAuthController.setKey(keyPair);
       const email = user.email;
       //console.log("accesstoken",accessToken)
       const success_url = window.location.origin;
@@ -305,7 +316,21 @@ function LoginWithSocialAuth() {
       const contract_id = "v1.social08.testnet"
       const public_key_lak = null;
       let isRecovery = true;
-      const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+      let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
+      if (!window.fastAuthController.getAccountId()) {
+        await window.fastAuthController.setAccountId(accountId);
+      }
+
+      if(!oidcKeypair){
+        await window.fastAuthController.claimOidcToken(accessToken);
+        oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+        window.firestoreController = new FirestoreController();
+        window.firestoreController.updateUser({
+          userUid:   user.uid,
+          oidcToken: accessToken,
+        });
+      }
       //console.log("acc",accountId)
       const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
         .then((res) => res.json())
@@ -321,16 +346,16 @@ function LoginWithSocialAuth() {
         accountId = accountIds[0]
         
        }
-       if(!isRecovery){
+      
         //check exist account . if not exist then create . if exist create another account
         const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
         if(isAvailable){
           accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
         }else{
-          const accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
         }
-        
-       }
+      
+       
       // if account in mpc then recovery 
       // if account not exist then create new account
       if(isRecovery){
@@ -348,7 +373,7 @@ function LoginWithSocialAuth() {
           }
         )
       }else{
-        await  onCreateAccount(
+        await onCreateAccount(
           {
             oidcKeypair,
             accessToken,
@@ -360,8 +385,8 @@ function LoginWithSocialAuth() {
             success_url,
             setStatusMessage,
             email,
-            navigate,
             gateway:success_url,
+            navigate
           }
         )
       }
