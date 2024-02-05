@@ -128,7 +128,8 @@ class FastAuthController {
     let keyPair = await this.getKey();
 
     if (!keyPair) {
-      const biometricKeyPair = await this.getBiometricKey();
+
+      const biometricKeyPair = KeyPair.fromRandom('ed25519');;
       await this.setKey(biometricKeyPair);
 
       keyPair = biometricKeyPair;

@@ -9,15 +9,9 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { createNEARAccount } from '../../api';
 import FirestoreController from '../../lib/firestoreController';
-import { actionCreators } from "@near-js/transactions";
-import { basePath, network, networkId } from '../../utils/config';
+import {  network , networkId} from '../../utils/config';
 import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
-import { InMemoryKeyStore } from "@near-js/keystores";
-import { JsonRpcProvider } from '@near-js/providers';
-import type { KeyStore } from '@near-js/keystores';
-import { Account } from '@near-js/accounts';
-import { InMemorySigner } from '@near-js/signers';
 import {
   getAddKeyAction, getAddLAKAction , syncProfile
 } from '../../utils/mpc-service';
@@ -29,7 +23,6 @@ import { useAuthState } from '../../lib/useAuthState';
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
-import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
     prompt : "select_account"
@@ -68,7 +61,7 @@ const onCreateAccount = async ({
     oidcKeypair,
   });
   console.log("res.type",res)
-  //if (res.type === 'err') return;
+  if (res.type === 'err') return;
 
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
@@ -153,6 +146,7 @@ export const onSignIn = async ({
 
    // onlyAddLak will be true if current browser already has a FAK with passkey
    const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
+   console.log("onlyAddLak",onlyAddLak)
    const addKeyActions = onlyAddLak
      ? getAddLAKAction({
        publicKeyLak: public_key_lak,
@@ -166,9 +160,6 @@ export const onSignIn = async ({
        methodNames,
        allowance:         new BN('250000000000000'),
      });
-     window.localStorage.setItem('accessToken', accessToken);
-     window.localStorage.setItem('accountId', accountIds[0]);
-     window.localStorage.setItem('recoveryPK', recoveryPK);
    return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
      oidcToken: accessToken,
      accountId: accountIds[0],
@@ -180,10 +171,9 @@ export const onSignIn = async ({
        const failure = res['Receipts Outcome']
          .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
        if (failure?.ActionError?.kind?.LackBalanceForState) {
-         //navigate(`/devices?${searchParams.toString()}`);
+
        } else {
          await checkFirestoreReady();
-         
           
          if (!window.firestoreController) {
            (window as any).firestoreController = new FirestoreController();
@@ -199,28 +189,6 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
-         
-         //setStatusMessage()
-        //  const syncActions = syncProfile({
-        //   accountId:   "",
-        //   accountName: "",
-        //   accountUser:        "",
-        //   accountPicProfile : ""
-        // });
-   
-
-        // (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-        //   oidcToken: accessToken,
-        //   accountId: accountIds[0],
-        //   recoveryPK,
-        //   actions: syncActions
-        // })
-        //   .then((res) => res.json())
-        //   .then(async (res) => {
-        //     setStatusMessage('done');
-        //   })
-
-        
        }
      });
 };
@@ -289,167 +257,63 @@ function LoginWithSocialAuth() {
     navigate(0)
   }
 
-  const signInWithTwitter = async() =>{
-    const {user} = await signInWithTwitterPopup();
-    if (!user) return;
-    const accessToken = await user.getIdToken();
-      let publicKeyFak: string;
-      let public_key_lak : string;
-      const keyPair = KeyPair.fromRandom('ed25519');
-      publicKeyFak = keyPair.getPublicKey().toString();
-      await window.fastAuthController.setKey(keyPair);
-      const email = user.providerData[0].email;
-      //console.log("accesstoken",accessToken)
-      const success_url = window.location.origin;
-      let accountId = "" // user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
-      const methodNames = "set";
-      const contract_id = "v1.social08.testnet"
-      
-      let isRecovery = true;
-      let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-
-      if (!window.fastAuthController.getAccountId()) {
-        await window.fastAuthController.setAccountId(accountId);
-      }
-
-      if(!oidcKeypair){
-        await window.fastAuthController.claimOidcToken(accessToken);
-        oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-        window.firestoreController = new FirestoreController();
-        window.firestoreController.updateUser({
-          userUid:   user.uid,
-          oidcToken: accessToken,
-        });
-      }
-      //console.log("acc",accountId)
-      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
-        .then((res) => res.json())
-        .catch((err) => {
-          console.log(err);
-          captureException(err);
-          throw new Error('Unable to retrieve account Id');
-        });
-       if (!accountIds.length) {
-        isRecovery = false
-       }
-       if(isRecovery){
-        accountId = accountIds[0]
-        
-       }
-        //check exist account . if not exist then create . if exist create another account
-        const isAvailable = await checkIsAccountAvailable(email?email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`):`${user.displayName.toString().toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`);
-        if(isAvailable){
-          accountId = `${email?email.replace("@gmail.com",""):user.displayName.toString().toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`
-
-        }else{
-          accountId = `${email?email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()):user.displayName.toString().toLocaleLowerCase()+publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`;
-        }
-        if (!window.fastAuthController.getAccountId()) {
-          await window.fastAuthController.setAccountId(accountId);
-        }
-      // if account in mpc then recovery 
-      // if account not exist then create new account
-      if(isRecovery){
-       
-        await onSignIn(
-          {
-            accessToken,
-            publicKeyFak,
-            public_key_lak,
-            contract_id,
-            methodNames,
-            setStatusMessage,
-            email,
-            navigate,
-            gateway:success_url,
-          }
-        )
-      }else{
-      //  public_key_lak = publicKeyFak;
-        await onCreateAccount(
-          {
-            oidcKeypair,
-            accessToken,
-            accountId,
-            publicKeyFak,
-            public_key_lak,
-            contract_id,
-            methodNames,
-            success_url,
-            setStatusMessage,
-            email,
-            gateway:success_url,
-            navigate
-          }
-        )
-      }
-  }
-
-  const signInWithGoogle = async () => {
+  const signIn = async (authType) => {
     try {
-      const {user} = await signInWithGooglePopup();
+      const {user} = authType == "google" ? await signInWithGooglePopup() : await signInWithTwitterPopup();
       if (!user || !user.emailVerified) return;
   
       const accessToken = await user.getIdToken();
-      let publicKeyFak: string;
-      let public_key_lak : string;
-      const keyPair = KeyPair.fromRandom('ed25519');
-      publicKeyFak = keyPair.getPublicKey().toString();
-      await window.fastAuthController.setKey(keyPair);
+      
       const email = user.email;
-      //console.log("accesstoken",accessToken)
       const success_url = window.location.origin;
-      let accountId = "" // user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
+
+      //check accounts
+      let accountId = window.fastAuthController.getAccountId()
       const methodNames = "set";
       const contract_id = "v1.social08.testnet"
-      
       let isRecovery = true;
-      let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
+      
+      setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+
+      // claim the oidc token
+      window.fastAuthController = new FastAuthController({
+        accountId,
+        networkId
+      });
+      
+
+      let publicKeyFak: string;
+      let public_key_lak : string;
+      
+      
+        const keyPair =  KeyPair.fromRandom('ed25519');
+        publicKeyFak = keyPair.getPublicKey().toString();
+        await window.fastAuthController.setKey(keyPair);
+      
 
       if (!window.fastAuthController.getAccountId()) {
+        isRecovery = false
+        const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+        if(isAvailable){
+          accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
+        }else{
+          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+        }
         await window.fastAuthController.setAccountId(accountId);
       }
 
-      if(!oidcKeypair){
-        await window.fastAuthController.claimOidcToken(accessToken);
-        oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-        window.firestoreController = new FirestoreController();
-        window.firestoreController.updateUser({
-          userUid:   user.uid,
-          oidcToken: accessToken,
-        });
-      }
-      //console.log("acc",accountId)
-      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
-        .then((res) => res.json())
-        .catch((err) => {
-          console.log(err);
-          captureException(err);
-          throw new Error('Unable to retrieve account Id');
-        });
-       if (!accountIds.length) {
-        isRecovery = false
-                //check exist account . if not exist then create . if exist create another account
-                const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-                if(isAvailable){
-                  accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-                }else{
-                  accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-                }
-       } else{
-        if(isRecovery){
-          accountId = accountIds[0]
-         }
-       }
-
-      
-
-      
-       
+      await window.fastAuthController.claimOidcToken(accessToken);
+      const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+      window.firestoreController = new FirestoreController();
+      window.firestoreController.updateUser({
+        userUid:   user.uid,
+        oidcToken: accessToken,
+      });
       // if account in mpc then recovery 
       // if account not exist then create new account
       if(isRecovery){
-       
+       setStatusMessage("logging...")
         await onSignIn(
           {
             accessToken,
@@ -465,6 +329,7 @@ function LoginWithSocialAuth() {
         )
       }else{
       //  public_key_lak = publicKeyFak;
+      setStatusMessage("creating new account")
         await onCreateAccount(
           {
             oidcKeypair,
@@ -491,9 +356,11 @@ function LoginWithSocialAuth() {
     }
   }
   const hanleSync = async() =>{
-    const accountId = window.localStorage.getItem("accountId");
-    const accessToken = window.localStorage.getItem('accessToken');
-    const recoveryPk = window.localStorage.getItem('recoveryPK');
+    const accessToken = await firebaseAuth.currentUser.getIdToken()
+    const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+    const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
+    
+    console.log("recoveryPk",recoveryPK)
     const syncActions = syncProfile({
       accountId:   "",
       accountName: "",
@@ -504,8 +371,8 @@ function LoginWithSocialAuth() {
   
     (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
       oidcToken: accessToken,
-      accountId: accountId,
-      recoveryPk,
+      accountId: accountIds[0],
+      recoveryPK,
       actions: syncActions
     })
       .then((res) => res.json())
@@ -536,12 +403,12 @@ function LoginWithSocialAuth() {
         
         : <div>
           <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={signInWithGoogle} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+              <button onClick={(e)=>signIn("google")} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
                   <span>Login with Google</span>
               </button>
           </div>
           <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={signInWithTwitter} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+              <button onClick={(e)=>signIn("twitter")} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
                   <span>Login with Twitter</span>
               </button>
           </div>
