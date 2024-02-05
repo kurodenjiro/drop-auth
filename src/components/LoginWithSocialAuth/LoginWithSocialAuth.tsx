@@ -94,18 +94,10 @@ const onCreateAccount = async ({
       setStatusMessage,
       email,
       gateway,
-      navigate
+      navigate,
+      accountId,
+      recoveryPK
     })
-  
-  
-  
-
-  // parsedUrl.searchParams.set('account_id', res.near_account_id);
-  // parsedUrl.searchParams.set('public_key', public_key_lak);
-  // parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
-
-  // window.location.replace(parsedUrl.href);
-  //recoverPK sẽ pass vào dưới này
 };
 
 export const onSignIn = async ({
@@ -117,59 +109,11 @@ export const onSignIn = async ({
   setStatusMessage,
   email,
   gateway,
-  navigate
+  navigate,
+  accountId,
+  recoveryPK
 }) => {
 
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  
-  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-    .then((res) => res.json())
-    .catch((err) => {
-      console.log(err);
-      captureException(err);
-      throw new Error('Unable to retrieve account Id');
-    });
-
-
-  if (!accountIds.length) {
-    //creat wallet here
-    const success_url = window.location.origin;
-    const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-    const isAvailable = await checkIsAccountAvailable(email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-    let accountId : string;
-    if(isAvailable){
-      accountId = email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-    }else{
-      accountId = email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-    }
-    await window.fastAuthController.setAccountId(accountId);
-    await onCreateAccount(
-      {
-        oidcKeypair,
-        accessToken,
-        accountId,
-        publicKeyFak,
-        public_key_lak,
-        contract_id,
-        methodNames,
-        success_url,
-        setStatusMessage,
-        email,
-        gateway:success_url,
-        navigate
-      }
-    )
-    throw new Error('Account not found, please create an account and try again');
-  }
-  
-  // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
-  // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
-  // // delete old lak key attached to webAuthN public Key
-  // const deleteKeyActions = existingDevice
-  //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
-
-
-   // onlyAddLak will be true if current browser already has a FAK with passkey
    const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
    console.log("onlyAddLak",onlyAddLak)
    const addKeyActions = onlyAddLak
@@ -185,9 +129,10 @@ export const onSignIn = async ({
        methodNames,
        allowance:         new BN('250000000000000'),
      });
-   return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+
+   await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
      oidcToken: accessToken,
-     accountId: accountIds[0],
+     accountId,
      recoveryPK,
      actions:   addKeyActions
    })
@@ -214,6 +159,7 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
+         window.location.reload();
        }
      });
 };
@@ -300,7 +246,7 @@ function LoginWithSocialAuth() {
       let isRecovery = true;
 
       
-      setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+    
 
       // claim the oidc token
       window.fastAuthController = new FastAuthController({
@@ -338,24 +284,26 @@ function LoginWithSocialAuth() {
       });
       // if account in mpc then recovery 
       // if account not exist then create new account
-      if(isRecovery){
-       setStatusMessage("logging...")
-        await onSignIn(
-          {
-            accessToken,
-            publicKeyFak,
-            public_key_lak,
-            contract_id,
-            methodNames,
-            setStatusMessage,
-            email,
-            navigate,
-            gateway:success_url,
-          }
-        )
-      }else{
-      //  public_key_lak = publicKeyFak;
-      setStatusMessage("creating new account")
+      const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+  
+      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+        .then((res) => res.json())
+        .catch((err) => {
+          console.log(err);
+          captureException(err);
+          throw new Error('Unable to retrieve account Id');
+        });
+    
+     
+      if (!accountIds.length) {
+        let accountId : string;
+        const isAvailable = await checkIsAccountAvailable(email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+        if(isAvailable){
+          accountId = email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
+        }else{
+          accountId = email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
+        }
+        await window.fastAuthController.setAccountId(accountId);
         await onCreateAccount(
           {
             oidcKeypair,
@@ -372,9 +320,24 @@ function LoginWithSocialAuth() {
             navigate
           }
         )
+      }else{
+        setStatusMessage("logging...")
+        await onSignIn(
+          {
+            accessToken,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            setStatusMessage,
+            email,
+            navigate,
+            gateway:success_url,
+            accountId:accountIds[0],
+            recoveryPK
+          }
+        )
       }
-
-
   
     } catch (error) {
       console.log('error', error);
