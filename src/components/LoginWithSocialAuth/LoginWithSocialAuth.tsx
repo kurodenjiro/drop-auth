@@ -30,6 +30,7 @@ import { useAuthState } from '../../lib/useAuthState';
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
+import axios from "axios"
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
     prompt : "select_account"
@@ -280,6 +281,16 @@ function LoginWithSocialAuth() {
   const navigate = useNavigate();
   const { authenticated } = useAuthState();
   const [statusMessage, setStatusMessage] = useState<any>(authenticated&&"");
+  const [elment,setElemnt] = useState([])
+  const [image,setImage] = useState<any>(null)
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [link, setLink] = useState([]);
+  const [amount, setAmount] = useState("");
+  const [select, setSelect] = useState("");
+
   const logout = async () => {
     await firebaseAuth.signOut();
     // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
@@ -512,44 +523,170 @@ function LoginWithSocialAuth() {
       })
   }
 
+  const handleInsertData = () =>{
+
+    axios.post('http://localhost:8080/api/dropauth/postData', {
+      name: name,
+      description: description,
+      start: start,
+      end: end,
+      link: link,
+      amount: amount
+    } )
+    .then(function (response) {
+      console.log(response);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+  
+  }
+
+  const onChangeLink = (e) =>{
+    if(select=="like"){
+      setLink(l=>l.concat(`https://twitter.com/intent/like?tweet_id=1752983766589722750`))
+    }else if(select=="follow"){
+      setLink(l=>l.concat(`https://twitter.com/intent/follow?screen_name=MagicBuildAI`))
+    }else if(select == "retweet"){
+      setLink(l=>l.concat(`https://twitter.com/intent/retweet?tweet_id=1752983766589722750`))
+    }
+  }
+console.log(link)
+console.log(image)
   return (
-    <LoginWrapper>
-      <div >
-        <header>
-          <h1 data-test-id="heading_login">Log In With Google</h1>
-        </header>
-        {authenticated ? 
-        (
-        <div>
-        <h3 className='text-2xl font-semibold'>signed in</h3>
-        <button className='px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150' onClick={logout}>Logout</button>
-        <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={hanleSync} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
-                  <span>Sync Profile Social</span>
+  <div className='background'>
+  <nav className="navbar navbar-expand-lg bg-body-tertiary">
+  <div className="container-fluid">
+    <a className="navbar-brand text-white" href="#">Navbar</a>
+    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span className="navbar-toggler-icon"></span>
+    </button>
+    <div className="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+        <li className="nav-item">
+          <a className="nav-link active text-white" aria-current="page" href="#">Home</a>
+        </li>
+        <li className="nav-item">
+          <a className="nav-link text-white" href="#">Link</a>
+        </li>
+      </ul>
+      <button className="btn btn-outline-success text-white" type="submit">Login</button>
+    </div>
+  </div>
+</nav>
+
+<div className="container py-5">
+
+  <div className="row mb-4">
+    <div className="col-lg-8 mx-auto text-center">
+       {image && (
+                  <div>
+                    <img
+                    width={"100%"}
+                    height={"400px"}
+                      src={URL.createObjectURL(image)}
+                      alt="Thumb"
+                    />
+                  </div>
+                )}
+    </div>
+  </div>
+  <div className="row">
+    <div className="col-lg-7 mx-auto">
+      <div className="form-format rounded-lg shadow-sm p-5">
+        <div className="tab-content">
+          <div id="nav-tab-card" className="tab-pane fade show active">
+            {/* <p className="alert alert-success">Some text success or error</p> */}
+            <h3 className='fs-3 text-white'>General Information</h3>
+            <form className="form mt-2">
+              <div className="form-group mt-2 fs-6">
+                <label className='text-white'>Name</label>
+                <input onChange={(e)=>setName(e.target.value)} type="text" name="username" placeholder="MyCompany Macbook Air giveaway" required className="form-control"/>
+              </div>
+              <div className="form-group mt-2 fs-6">
+                <label className='text-white'>Description</label>
+                <input onChange={(e)=>setDescription(e.target.value)} type="text" name="username" placeholder="It's Time to Step into the Open Web with NEAR Protocol" required className="form-control"/>
+              </div>
+              <div className="form-group mt-2 fs-6">
+                <div className='d-flex justify-content-between'>
+                 <div>
+                 <label className='text-white'>Start</label>
+                  <div className="input-group">
+                    <input onChange={(e)=>setStart(e.target.value)} type="date" name="cardNumber" placeholder="Your card number" className="form-control" required/>
+                  </div>
+                 </div>
+                  <div>
+                    <label className='text-white'>End</label>
+                    <div className="input-group">
+                      <input onChange={(e)=>setEnd(e.target.value)} type="date" name="cardNumber" placeholder="Your card number" className="form-control" required/>
+                    </div>
+                  </div>
+                  <div>
+                  <label className='text-white'>Time Zone</label>
+                  <select className="form-select mt-2">
+                    <option selected>-- Select time zone --</option>
+                    <option value="like">UTC+07:00 (Indochina Time)</option>
+                    <option value="follow">UTC-11:00 (ST)</option>
+                    <option value="retweet">UTC-10:00 </option>
+                  </select>
+                  </div>
+                </div>
+              </div>
+
+              <label className='mt-3 fs-6 text-white'>Upload cover</label>
+              <div className="form-group mt border">
+                <input type="file" onChange={(e)=>setImage(e.target.files[0])}/>
+              </div>
+            </form>
+            <h3 className='mt-3 fs-3 text-white'>Add Mission</h3>
+            <div className="form mt-2">
+              <button onClick={()=>{
+                setElemnt(elment=>elment.concat(<div>
+                  <div className="form-group mt-2">
+                  <label className='mt-2 text-white fs-6'>Link</label>
+                  <input onChange={(e)=>onChangeLink(e)} type="text" name="username" placeholder="https://twitter.com/MagicBuildAI" required className="form-control"/>
+                </div>
+                <div className="form-group mt-2">
+                  <select onChange={(e)=>setSelect(e.target.value)} className="form-select">
+                    <option selected>-- Select options --</option>
+                    <option value="like">Like</option>
+                    <option value="follow">Follow</option>
+                    <option value="retweet">Retweet</option>
+                  </select>
+                </div>
+              </div>))
+              }} type="button" className="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-twitter" viewBox="0 0 16 16">
+                <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334q.002-.211-.006-.422A6.7 6.7 0 0 0 16 3.542a6.7 6.7 0 0 1-1.889.518 3.3 3.3 0 0 0 1.447-1.817 6.5 6.5 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.32 9.32 0 0 1-6.767-3.429 3.29 3.29 0 0 0 1.018 4.382A3.3 3.3 0 0 1 .64 6.575v.045a3.29 3.29 0 0 0 2.632 3.218 3.2 3.2 0 0 1-.865.115 3 3 0 0 1-.614-.057 3.28 3.28 0 0 0 3.067 2.277A6.6 6.6 0 0 1 .78 13.58a6 6 0 0 1-.78-.045A9.34 9.34 0 0 0 5.026 15"/>
+              </svg>
+                <span className='p-2'>Twiiter</span>
               </button>
+              {elment}
+            </div>
+            <h3 className='mt-3 fs-3 text-white'>Prizes</h3>
+            <form className="form mt-2">
+              <div className="form-group mt-2">
+                <label className='fs-6 text-white'>Amount</label>
+                <input onChange={(e)=>setAmount(e.target.value)} type="text" placeholder="10 NEAR" required className="form-control"/>
+              </div>
+              <div className="row mt-2 g-2">
+                <label className='col fs-6 text-white'>Distribute</label>
+                <div className="form-check col fs-6">
+                  <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault"/>
+                  <label className="form-check-label text-white" htmlFor="flexCheckDefault">
+                    Random
+                  </label>
+                </div>
+              </div>
+              <button onClick={()=>handleInsertData()} type="button" className="mt-3 font-weight-bold subscribe btn btn-primary btn-block rounded-pill shadow-sm px-3 py-2 fs-5"> Create  </button>
+            </form>
           </div>
         </div>
-        
-        )
-        
-        : <div>
-          <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={signInWithGoogle} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
-                  <span>Login with Google</span>
-              </button>
-          </div>
-          <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={signInWithTwitter} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
-                  <span>Login with Twitter</span>
-              </button>
-          </div>
-        </div>
-        
-        }
-        
-        <div data-test-id="callback-status-message">{statusMessage}</div>
       </div>
-    </LoginWrapper>
+    </div>
+  </div>
+</div>
+  </div>
   );
 }
 

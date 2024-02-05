@@ -19,6 +19,8 @@ import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
+import Dashboard from './components/Dashboard/Dashboard';
+import Home from './components/Home/Home';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'harisvalj.testnet',
@@ -71,6 +73,8 @@ export default function App() {
             <Route index element={<AuthIndicator />} />
             <Route path="login" element={<Login />} />
             <Route path="LoginWithSocialAuth" element={<LoginWithSocialAuth />} />
+            <Route path="Dashboard" element={<Dashboard />} />
+            <Route path="Home" element={<Home />} />
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
