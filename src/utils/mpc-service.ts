@@ -2,7 +2,6 @@ import { PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
-import BN from 'bn.js';
 import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
 import BN from "bn.js";
@@ -69,8 +68,7 @@ export const getSignRequestFrpSignature = ({
   return convertToHex(signature.signature);
 };
 
-const gas = "300000000000000";
-const deposit = "50000000000000000000000";
+
 
 export const synprofile = ({
   accountId,
