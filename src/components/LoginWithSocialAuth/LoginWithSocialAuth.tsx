@@ -64,7 +64,7 @@ const onCreateAccount = async ({
     oidcKeypair,
   });
   console.log("res.type",res)
-  if (res.type === 'err') return;
+  //if (res.type === 'err') return;
 
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
@@ -93,7 +93,7 @@ const onCreateAccount = async ({
     await onSignIn({
       accessToken,
       publicKeyFak,
-      public_key_lak,
+      public_key_lak : recoveryPK,
       contract_id,
       methodNames,
       setStatusMessage,
@@ -333,7 +333,7 @@ function LoginWithSocialAuth() {
         if(isAvailable){
           accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
         }else{
-          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
         }
       
        

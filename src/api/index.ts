@@ -14,10 +14,10 @@ import {
  */
 export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
   const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+ 
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
-
   const accountIds = await res.json();
   console.log('accountIds', res);
   if (accountIds.length === 0) {

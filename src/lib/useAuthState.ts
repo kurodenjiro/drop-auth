@@ -40,8 +40,10 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
             console.log("isReady",isReady)
             const oidcToken = await firebaseAuth.currentUser.getIdToken();
             const localStoreKey = await window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+           
             if (localStoreKey) {
               const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+              console.log("localStoreKey",recoveryPK)
               const accountIds = await fetchAccountIds(recoveryPK);
               (window as any).fastAuthController = new FastAuthController({
                 accountId: accountIds[0],
