@@ -47,7 +47,6 @@ const onCreateAccount = async ({
   gateway,
   navigate
 }) => {
-  console.log("oidcKeypair",oidcKeypair)
   const res = await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
@@ -85,8 +84,7 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  console.log(recoveryPK)
-//recoveryPK sẽ pass vào dưới này
+
     await onSignIn({
       accessToken,
       publicKeyFak,
@@ -266,12 +264,28 @@ function LoginWithSocialAuth() {
       
       const email = user.email;
       const success_url = window.location.origin;
-
+      let accountId = ""
+      let isRecovery = true;
       //check accounts
-      let accountId = window.fastAuthController.getAccountId()
+      const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+      if(recoveryPK){
+        
+        const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+        .then((res) => res.json())
+
+        console.log("accountIds.length()",accountIds.length);
+        if(accountIds.length){
+          accountId = accountIds[0]
+        }
+        
+      }else{
+        isRecovery = false ;
+      }
+
+      
       const methodNames = "set";
       const contract_id = "v1.social08.testnet"
-      let isRecovery = true;
+     
 
       
       setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
@@ -291,17 +305,8 @@ function LoginWithSocialAuth() {
         publicKeyFak = keyPair.getPublicKey().toString();
         await window.fastAuthController.setKey(keyPair);
       
+        
 
-      if (!window.fastAuthController.getAccountId()) {
-        isRecovery = false
-        const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-        if(isAvailable){
-          accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-        }else{
-          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
-        }
-        await window.fastAuthController.setAccountId(accountId);
-      }
 
       await window.fastAuthController.claimOidcToken(accessToken);
       const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
@@ -329,7 +334,13 @@ function LoginWithSocialAuth() {
         )
       }else{
       //  public_key_lak = publicKeyFak;
-      setStatusMessage("creating new account")
+      const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+      if(isAvailable){
+        accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
+      }else{
+        accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()+`.${network.fastAuth.accountIdSuffix}`) ;
+      }
+      await window.fastAuthController.setAccountId(accountId);
         await onCreateAccount(
           {
             oidcKeypair,

@@ -291,7 +291,7 @@ class FastAuthController {
     const keypair = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
 
     if (!keypair) {
-      throw new Error('Unable to get oidc keypair');
+      return null;
     }
 
     const signature = getUserCredentialsFrpSignature({
