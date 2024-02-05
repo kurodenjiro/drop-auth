@@ -10,7 +10,7 @@ import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Devices from './components/Devices/Devices';
 import Login from './components/Login/Login';
-import CreateMission from './components/LoginWithSocialAuth/CreateMission';
+import CreateMission from './components/CreateMission/CreateMission';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
