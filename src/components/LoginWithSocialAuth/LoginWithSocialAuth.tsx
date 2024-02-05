@@ -369,15 +369,15 @@ function LoginWithSocialAuth() {
     //   allowance:"250000000000000", 
     //   publicKey:recoveryPK,
     // })
-    (window as any).fastAuthController.signDelegateActionWhitelist({
+    (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
       receiverId :"v1.social08.testnet",
       actions: [functionCall(
         "set",
         {
           data: {
-            [""]: {
+            [accountIds[0]]: {
                 profile: {
-                    name:  "",
+                    name:  "MPC x",
                     description: "MPC sync with ",
                     linktree: {
                         gmail: "",

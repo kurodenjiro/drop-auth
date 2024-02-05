@@ -397,6 +397,45 @@ class FastAuthController {
     });
   }
 
+  async signAndSendActionsWithRecoveryKey({
+    oidcToken,
+    accountId,
+    recoveryPK,
+    actions,
+  }) {
+    const signedDelegate = await this.createSignedDelegateWithRecoveryKey({
+      oidcToken,
+      accountId,
+      recoveryPK,
+      actions,
+    }).catch((err) => {
+      console.log(err);
+      captureException(err);
+      throw new Error('Unable to sign delegate action');
+    });
+    const encodedSignedDelegate = encodeSignedDelegate(signedDelegate);
+    return fetch(network.relayerUrl, {
+      method:  'POST',
+      mode:    'cors',
+      body:    JSON.stringify(Array.from(encodedSignedDelegate)),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).catch((err) => {
+      console.log('Unable to sign and send action with recovery key', err);
+      captureException(err);
+    });
+  }
+  async signAndSendDelegateActionWhitelist({ receiverId, actions }) {
+    const signedDelegate = await this.signDelegateActionWhitelist({ receiverId, actions, signerId: this.accountId });
+    return fetch(network.relayerUrl, {
+      method:  'POST',
+      mode:    'cors',
+      body:    JSON.stringify(Array.from(encodeSignedDelegate(signedDelegate))),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).catch((err) => {
+      console.log('Unable to sign and send delegate action', err);
+      captureException(err);
+    });
+  }
   async signDelegateActionWhitelist({ receiverId, actions, signerId }) {
     this.assertValidSigner(signerId);
     let signedDelegate;
@@ -497,33 +536,10 @@ class FastAuthController {
       });
     });
   }
-  async signAndSendActionsWithRecoveryKey({
-    oidcToken,
-    accountId,
-    recoveryPK,
-    actions,
-  }) {
-    const signedDelegate = await this.createSignedDelegateWithRecoveryKey({
-      oidcToken,
-      accountId,
-      recoveryPK,
-      actions,
-    }).catch((err) => {
-      console.log(err);
-      captureException(err);
-      throw new Error('Unable to sign delegate action');
-    });
-    const encodedSignedDelegate = encodeSignedDelegate(signedDelegate);
-    return fetch(network.relayerUrl, {
-      method:  'POST',
-      mode:    'cors',
-      body:    JSON.stringify(Array.from(encodedSignedDelegate)),
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-    }).catch((err) => {
-      console.log('Unable to sign and send action with recovery key', err);
-      captureException(err);
-    });
-  }
 }
+
+
+
+
 
 export default FastAuthController;
