@@ -50,6 +50,7 @@ const onCreateAccount = async ({
   gateway,
   navigate
 }) => {
+  console.log("oidcKeypair",oidcKeypair)
   await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
@@ -305,7 +306,11 @@ function LoginWithSocialAuth() {
       const contract_id = "v1.social08.testnet"
       const public_key_lak = null;
       let isRecovery = true;
-      const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+      let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+      if(!oidcKeypair){
+        await window.fastAuthController.claimOidcToken(accessToken);
+        oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+      }
       //console.log("acc",accountId)
       const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
         .then((res) => res.json())
@@ -321,16 +326,16 @@ function LoginWithSocialAuth() {
         accountId = accountIds[0]
         
        }
-       if(!isRecovery){
+      
         //check exist account . if not exist then create . if exist create another account
         const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
         if(isAvailable){
           accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
         }else{
-          const accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
         }
-        
-       }
+      
+       
       // if account in mpc then recovery 
       // if account not exist then create new account
       if(isRecovery){
@@ -348,7 +353,7 @@ function LoginWithSocialAuth() {
           }
         )
       }else{
-        await  onCreateAccount(
+        await onCreateAccount(
           {
             oidcKeypair,
             accessToken,
@@ -360,8 +365,8 @@ function LoginWithSocialAuth() {
             success_url,
             setStatusMessage,
             email,
-            navigate,
             gateway:success_url,
+            navigate
           }
         )
       }
