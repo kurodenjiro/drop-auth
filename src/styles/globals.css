@@ -33,6 +33,9 @@ html {
   text-decoration: none;
   outline: none;
 }
+.btn:hover{
+  border: 1px solid white !important;
+}
 .btn:focus{
   outline: none !important;
   border: none !important;
@@ -141,6 +144,7 @@ html {
 .btn-ms{
   border: 1px solid white;
   border-radius: 15px;
+  margin-top: 20px;
 }
 #w3m-modal { z-index: 1002 }
 

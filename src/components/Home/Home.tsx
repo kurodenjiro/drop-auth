@@ -49,8 +49,8 @@ export default function Home(){
                     <h3 className="text-white fs-3">Mission Web3</h3>
                 </div>
                 <div className="project-show ">
-                    {data&&data.map(dt=>(
-                        <a href={`/Dashboard?mission_id=${dt._id}`} className="card card-format text-decoration-none">
+                    {data&&data.map((dt,i)=>(
+                        <a href={`/Dashboard?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
                             <img src="..." className="card-img-top" alt="..."/>
                             <div className="card-body">
                                 <h3 className="card-title text-truncate">{dt.name}</h3>
