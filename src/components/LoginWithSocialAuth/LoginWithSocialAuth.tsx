@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useEffect ,useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider,TwitterAuthProvider } from "firebase/auth";
 import { useNavigate, useRoutes, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 import { LoginWrapper } from './LoginWithSocialAuth.style';
@@ -28,13 +28,17 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { useAuthState } from '../../lib/useAuthState';
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
+const providerTwiiter = new TwitterAuthProvider();
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
     prompt : "select_account"
 });
+providerTwiiter.setCustomParameters({   
+  prompt : "select_account"
+});
 export const signInWithGooglePopup = () => signInWithPopup(firebaseAuth, provider);
-
+export const signInWithTwitterPopup = () => signInWithPopup(firebaseAuth, providerTwiiter)
 
 const onCreateAccount = async ({
   oidcKeypair,
@@ -124,7 +128,7 @@ export const onSignIn = async ({
   gateway,
   navigate,
 }) => {
-  
+
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
     .then((res) => res.json())
@@ -139,6 +143,7 @@ export const onSignIn = async ({
     //creat wallet here
     throw new Error('Account not found, please create an account and try again');
   }
+  
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -161,7 +166,9 @@ export const onSignIn = async ({
        methodNames,
        allowance:         new BN('250000000000000'),
      });
- 
+     window.localStorage.setItem('accessToken', accessToken);
+     window.localStorage.setItem('accountId', accountIds[0]);
+     window.localStorage.setItem('recoveryPK', recoveryPK);
    return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
      oidcToken: accessToken,
      accountId: accountIds[0],
@@ -176,6 +183,8 @@ export const onSignIn = async ({
          //navigate(`/devices?${searchParams.toString()}`);
        } else {
          await checkFirestoreReady();
+         
+          
          if (!window.firestoreController) {
            (window as any).firestoreController = new FirestoreController();
          }
@@ -190,29 +199,32 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
-         const syncActions = syncProfile({
-          accountId:   "",
-          accountName: "",
-          accountUser:        "",
-          accountPicProfile : ""
-        });
+         
+         //setStatusMessage()
+        //  const syncActions = syncProfile({
+        //   accountId:   "",
+        //   accountName: "",
+        //   accountUser:        "",
+        //   accountPicProfile : ""
+        // });
    
 
-        (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-          oidcToken: accessToken,
-          accountId: accountIds[0],
-          recoveryPK,
-          actions: syncActions
-        })
-          .then((res) => res.json())
-          .then(async (res) => {
-            setStatusMessage('done');
-          })
+        // (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+        //   oidcToken: accessToken,
+        //   accountId: accountIds[0],
+        //   recoveryPK,
+        //   actions: syncActions
+        // })
+        //   .then((res) => res.json())
+        //   .then(async (res) => {
+        //     setStatusMessage('done');
+        //   })
 
-         
+        
        }
      });
 };
+
 
 const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
   try {
@@ -277,6 +289,101 @@ function LoginWithSocialAuth() {
     navigate(0)
   }
 
+  const signInWithTwitter = async() =>{
+    const {user} = await signInWithTwitterPopup();
+    if (!user) return;
+    const accessToken = await user.getIdToken();
+      let publicKeyFak: string;
+      let public_key_lak : string;
+      const keyPair = KeyPair.fromRandom('ed25519');
+      publicKeyFak = keyPair.getPublicKey().toString();
+      await window.fastAuthController.setKey(keyPair);
+      const email = user.providerData[0].email;
+      //console.log("accesstoken",accessToken)
+      const success_url = window.location.origin;
+      let accountId = "" // user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
+      const methodNames = "set";
+      const contract_id = "v1.social08.testnet"
+      
+      let isRecovery = true;
+      let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
+      if (!window.fastAuthController.getAccountId()) {
+        await window.fastAuthController.setAccountId(accountId);
+      }
+
+      if(!oidcKeypair){
+        await window.fastAuthController.claimOidcToken(accessToken);
+        oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+        window.firestoreController = new FirestoreController();
+        window.firestoreController.updateUser({
+          userUid:   user.uid,
+          oidcToken: accessToken,
+        });
+      }
+      //console.log("acc",accountId)
+      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKeyFak}/accounts`)
+        .then((res) => res.json())
+        .catch((err) => {
+          console.log(err);
+          captureException(err);
+          throw new Error('Unable to retrieve account Id');
+        });
+       if (!accountIds.length) {
+        isRecovery = false
+       }
+       if(isRecovery){
+        accountId = accountIds[0]
+        
+       }
+        //check exist account . if not exist then create . if exist create another account
+        const isAvailable = await checkIsAccountAvailable(email?email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`):`${user.displayName.toString().toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`);
+        if(isAvailable){
+          accountId = `${email?email.replace("@gmail.com",""):user.displayName.toString().toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`
+
+        }else{
+          accountId = `${email?email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()):user.displayName.toString().toLocaleLowerCase()+publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()}.${network.fastAuth.accountIdSuffix}`;
+        }
+        if (!window.fastAuthController.getAccountId()) {
+          await window.fastAuthController.setAccountId(accountId);
+        }
+      // if account in mpc then recovery 
+      // if account not exist then create new account
+      if(isRecovery){
+       
+        await onSignIn(
+          {
+            accessToken,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            setStatusMessage,
+            email,
+            navigate,
+            gateway:success_url,
+          }
+        )
+      }else{
+      //  public_key_lak = publicKeyFak;
+        await onCreateAccount(
+          {
+            oidcKeypair,
+            accessToken,
+            accountId,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            success_url,
+            setStatusMessage,
+            email,
+            gateway:success_url,
+            navigate
+          }
+        )
+      }
+  }
 
   const signInWithGoogle = async () => {
     try {
@@ -322,19 +429,21 @@ function LoginWithSocialAuth() {
         });
        if (!accountIds.length) {
         isRecovery = false
+                //check exist account . if not exist then create . if exist create another account
+                const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+                if(isAvailable){
+                  accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
+                }else{
+                  accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
+                }
+       } else{
+        if(isRecovery){
+          accountId = accountIds[0]
+         }
        }
-       if(isRecovery){
-        accountId = accountIds[0]
-        
-       }
+
       
-        //check exist account . if not exist then create . if exist create another account
-        const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-        if(isAvailable){
-          accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-        }else{
-          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-        }
+
       
        
       // if account in mpc then recovery 
@@ -380,7 +489,29 @@ function LoginWithSocialAuth() {
       console.log('error', error);
       captureException(error);
     }
-   
+  }
+  const hanleSync = async() =>{
+    const accountId = window.localStorage.getItem("accountId");
+    const accessToken = window.localStorage.getItem('accessToken');
+    const recoveryPk = window.localStorage.getItem('recoveryPK');
+    const syncActions = syncProfile({
+      accountId:   "",
+      accountName: "",
+      accountUser:        "",
+      accountPicProfile : ""
+    });
+  
+  
+    (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+      oidcToken: accessToken,
+      accountId: accountId,
+      recoveryPk,
+      actions: syncActions
+    })
+      .then((res) => res.json())
+      .then(async (res) => {
+        setStatusMessage('done');
+      })
   }
 
   return (
@@ -394,14 +525,27 @@ function LoginWithSocialAuth() {
         <div>
         <h3 className='text-2xl font-semibold'>signed in</h3>
         <button className='px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150' onClick={logout}>Logout</button>
+        <div className="flex items-center justify-center h-screen dark:bg-gray-800">
+              <button onClick={hanleSync} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+                  <span>Sync Profile Social</span>
+              </button>
+          </div>
         </div>
+        
         )
         
-        : <div className="flex items-center justify-center h-screen dark:bg-gray-800">
+        : <div>
+          <div className="flex items-center justify-center h-screen dark:bg-gray-800">
               <button onClick={signInWithGoogle} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
                   <span>Login with Google</span>
               </button>
           </div>
+          <div className="flex items-center justify-center h-screen dark:bg-gray-800">
+              <button onClick={signInWithTwitter} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+                  <span>Login with Twitter</span>
+              </button>
+          </div>
+        </div>
         
         }
         
