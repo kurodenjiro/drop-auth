@@ -121,7 +121,8 @@ export const onSignIn = async ({
 }) => {
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+  const res =  await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+  const  accountIds = await res.json()
     .then((res) => res.json())
     .catch((err) => {
       console.log(err);
@@ -187,6 +188,7 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
+         window.location.reload();
        }
      });
 };
@@ -269,13 +271,13 @@ function LoginWithSocialAuth() {
       //check accounts
       const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
       if(recoveryPK){
-        
-        const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-        .then((res) => res.json())
-
-        console.log("accountIds.length()",accountIds.length);
+        const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+        const accountIds = await res.json();
+        console.log("accountIds",accountIds.length);
         if(accountIds.length){
           accountId = accountIds[0]
+        }else{
+          isRecovery = false ;
         }
         
       }else{
@@ -306,8 +308,6 @@ function LoginWithSocialAuth() {
         await window.fastAuthController.setKey(keyPair);
       
         
-
-
       await window.fastAuthController.claimOidcToken(accessToken);
       const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
       window.firestoreController = new FirestoreController();
