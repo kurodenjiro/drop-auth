@@ -63,6 +63,7 @@ const onCreateAccount = async ({
     accessToken,
     oidcKeypair,
   });
+  console.log("res.type",res)
   if (res.type === 'err') return;
 
   if (!window.firestoreController) {
@@ -87,7 +88,8 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-
+  console.log(recoveryPK)
+//recoveryPK sẽ pass vào dưới này
     await onSignIn({
       accessToken,
       publicKeyFak,
@@ -102,18 +104,13 @@ const onCreateAccount = async ({
   
   
   
-  //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  // const parsedUrl = new URL(
-  //   success_url && isUrlNotJavascriptProtocol(success_url)
-  //     ? success_url
-  //     : window.location.origin + (basePath ? `/${basePath}` : '')
-  // );
+
   // parsedUrl.searchParams.set('account_id', res.near_account_id);
   // parsedUrl.searchParams.set('public_key', public_key_lak);
   // parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
   // window.location.replace(parsedUrl.href);
-  
+  //recoverPK sẽ pass vào dưới này
 };
 
 export const onSignIn = async ({
@@ -263,23 +260,6 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
-export const connect = async (accountId: string, keyStore: KeyStore, network = 'mainnet'): Promise<Account> => {
-  const provider = new JsonRpcProvider({
-    url: network == 'mainnet' ? 'https://rpc.mainnet.near.org' : 'https://rpc.testnet.near.org',
-  });
-
-  const signer = new InMemorySigner(keyStore);
-
-  return new Account(
-    {
-      networkId: network,
-      provider,
-      signer,
-      jsvmAccountId: '',
-    },
-    accountId,
-  );
-};
 
 
 
@@ -305,6 +285,7 @@ function LoginWithSocialAuth() {
   
       const accessToken = await user.getIdToken();
       let publicKeyFak: string;
+      let public_key_lak : string;
       const keyPair = KeyPair.fromRandom('ed25519');
       publicKeyFak = keyPair.getPublicKey().toString();
       await window.fastAuthController.setKey(keyPair);
@@ -314,7 +295,7 @@ function LoginWithSocialAuth() {
       let accountId = "" // user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`) ;
       const methodNames = "set";
       const contract_id = "v1.social08.testnet"
-      const public_key_lak = null;
+      
       let isRecovery = true;
       let oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
 
@@ -359,6 +340,7 @@ function LoginWithSocialAuth() {
       // if account in mpc then recovery 
       // if account not exist then create new account
       if(isRecovery){
+       
         await onSignIn(
           {
             accessToken,
@@ -373,6 +355,7 @@ function LoginWithSocialAuth() {
           }
         )
       }else{
+      //  public_key_lak = publicKeyFak;
         await onCreateAccount(
           {
             oidcKeypair,
