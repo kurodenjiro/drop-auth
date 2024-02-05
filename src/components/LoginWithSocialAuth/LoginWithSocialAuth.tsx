@@ -588,24 +588,24 @@ console.log(image)
   return (
   <div className='background'>
   <nav className="navbar navbar-expand-lg bg-body-tertiary">
-  <div className="container-fluid">
-    <a className="navbar-brand text-white" href="#">Navbar</a>
-    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span className="navbar-toggler-icon"></span>
-    </button>
-    <div className="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-        <li className="nav-item">
-          <a className="nav-link active text-white" aria-current="page" href="#">Home</a>
-        </li>
-        <li className="nav-item">
-          <a className="nav-link text-white" href="#">Link</a>
-        </li>
-      </ul>
-      <button className="btn btn-outline-success text-white" type="submit">Login</button>
-    </div>
-  </div>
-</nav>
+            <div className="container-fluid nav-format">
+                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/Home"}>DropAuth</a>
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span className="navbar-toggler-icon"></span>
+                </button>
+                <div className="collapse navbar-collapse  nav-format" id="navbarSupportedContent">
+                    <ul className="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none ">
+                        <li className="nav-item">
+                        <a className="nav-link active text-white text-decoration-none fs-6" href="#">Home</a>
+                        </li>
+                        <li className="nav-item text-decoration-none">
+                        <a className="nav-link text-white text-decoration-none fs-6" href="#">Create Mission</a>
+                        </li>
+                    </ul>
+                    <button className="btn btn-outline-success text-white" type="submit">Login</button>
+                </div>
+            </div>
+            </nav>
 
 <div className="container py-5">
 
