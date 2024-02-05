@@ -27,17 +27,17 @@ export default function Home(){
         <div className="background">
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
-                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/Home"}>DropAuth</a>
+                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/Home"}>Campaign Craft</a>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse  nav-format" id="navbarSupportedContent">
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none ">
                         <li className="nav-item">
-                        <a className="nav-link active text-white text-decoration-none fs-6" href="#">Home</a>
+                        <a className="nav-link active text-white text-decoration-none fs-6" href="/">Home</a>
                         </li>
                         <li className="nav-item text-decoration-none">
-                        <a className="nav-link text-white text-decoration-none fs-6" href="#">Create Mission</a>
+                        <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
                         </li>
                     </ul>
                     <button className="btn btn-outline-success text-white" type="submit">Login</button>
@@ -50,7 +50,7 @@ export default function Home(){
                 </div>
                 <div className="project-show ">
                     {data&&data.map((dt,i)=>(
-                        <a href={`/Dashboard?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
+                        <a href={`/Post?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
                             <img src={dt.backgroundCover} className="card-img-top mt-2" alt="..."/>
                             <div className="card-body">
                                 <h3 className="card-title text-truncate">{dt.name}</h3>

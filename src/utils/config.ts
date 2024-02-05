@@ -125,6 +125,7 @@ export const networks: Record<NetworkId, Network> = {
       },
     },
   },
+
   // localnet: {
   //   // these are defined by https://github.com/kurtosis-tech/near-package
   //   networkId: 'localnet',

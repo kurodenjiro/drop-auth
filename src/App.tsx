@@ -10,7 +10,7 @@ import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Devices from './components/Devices/Devices';
 import Login from './components/Login/Login';
-import LoginWithSocialAuth from './components/LoginWithSocialAuth/LoginWithSocialAuth';
+import CreateMission from './components/LoginWithSocialAuth/CreateMission';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
@@ -19,7 +19,7 @@ import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
-import Dashboard from './components/Dashboard/Dashboard';
+import Post from './components/Post/Post';
 import Home from './components/Home/Home';
 
 (window as any).fastAuthController = new FastAuthController({
@@ -70,17 +70,16 @@ export default function App() {
         <RemoveTrailingSlash />
         <Routes>
           <Route path="/">
-            <Route index element={<AuthIndicator />} />
-            <Route path="login" element={<Login />} />
-            <Route path="LoginWithSocialAuth" element={<LoginWithSocialAuth />} />
-            <Route path="Dashboard" element={<Dashboard />} />
-            <Route path="Home" element={<Home />} />
+            <Route index element={<Home />} />
+            {/* <Route path="login" element={<Login />} /> */}
+            <Route path="create-mission" element={<CreateMission />} />
+            <Route path="post" element={<Post />} />
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
-            <Route path="verify-email" element={<VerifyEmailPage />} />
-            <Route path="auth-callback" element={<AuthCallbackPage />} />
+            {/* <Route path="verify-email" element={<VerifyEmailPage />} />
+            <Route path="auth-callback" element={<AuthCallbackPage />} /> */}
             <Route path="devices" element={<Devices />} />
           </Route>
         </Routes>
