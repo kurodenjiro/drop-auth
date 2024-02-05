@@ -68,40 +68,6 @@ export const getSignRequestFrpSignature = ({
   return convertToHex(signature.signature);
 };
 
-
-
-export const synprofile = ({
-  accountId,
-  methodNames,
-}): [Action] => [
-  functionCall(methodNames,
-  {
-    data: {
-      [accountId]: {
-          profile: {
-              name:  "vo huu nhan",
-              description: "",
-              linktree: {
-                  telegram: "",
-              },
-              image: {
-                ipfs_cid: ""
-              },
-              tags: {
-                dropwallet: "",
-                near: "",
-                genadrop: ""
-              }
-            }
-        }
-    }
-  
-  },
-  new BN(gas),
-  new BN(deposit))
-];
-
-
 export const getAddKeyAction = ({
   publicKeyLak,
   webAuthNPublicKey,
