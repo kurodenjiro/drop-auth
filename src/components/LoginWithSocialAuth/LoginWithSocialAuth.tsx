@@ -124,7 +124,7 @@ export const onSignIn = async ({
   gateway,
   navigate,
 }) => {
-  
+
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
     .then((res) => res.json())
@@ -139,6 +139,7 @@ export const onSignIn = async ({
     //creat wallet here
     throw new Error('Account not found, please create an account and try again');
   }
+  
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -161,7 +162,9 @@ export const onSignIn = async ({
        methodNames,
        allowance:         new BN('250000000000000'),
      });
- 
+     window.localStorage.setItem('accessToken', accessToken);
+     window.localStorage.setItem('accountId', accountIds[0]);
+     window.localStorage.setItem('recoveryPK', recoveryPK);
    return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
      oidcToken: accessToken,
      accountId: accountIds[0],
@@ -176,6 +179,8 @@ export const onSignIn = async ({
          //navigate(`/devices?${searchParams.toString()}`);
        } else {
          await checkFirestoreReady();
+         
+          
          if (!window.firestoreController) {
            (window as any).firestoreController = new FirestoreController();
          }
@@ -190,29 +195,32 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
-         const syncActions = syncProfile({
-          accountId:   "",
-          accountName: "",
-          accountUser:        "",
-          accountPicProfile : ""
-        });
+         
+         //setStatusMessage()
+        //  const syncActions = syncProfile({
+        //   accountId:   "",
+        //   accountName: "",
+        //   accountUser:        "",
+        //   accountPicProfile : ""
+        // });
    
 
-        (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-          oidcToken: accessToken,
-          accountId: accountIds[0],
-          recoveryPK,
-          actions: syncActions
-        })
-          .then((res) => res.json())
-          .then(async (res) => {
-            setStatusMessage('done');
-          })
+        // (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+        //   oidcToken: accessToken,
+        //   accountId: accountIds[0],
+        //   recoveryPK,
+        //   actions: syncActions
+        // })
+        //   .then((res) => res.json())
+        //   .then(async (res) => {
+        //     setStatusMessage('done');
+        //   })
 
-         
+        
        }
      });
 };
+
 
 const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
   try {
@@ -380,7 +388,29 @@ function LoginWithSocialAuth() {
       console.log('error', error);
       captureException(error);
     }
-   
+  }
+  const hanleSync = async() =>{
+    const accountId = window.localStorage.getItem("accountId");
+    const accessToken = window.localStorage.getItem('accessToken');
+    const recoveryPk = window.localStorage.getItem('recoveryPK');
+    const syncActions = syncProfile({
+      accountId:   "",
+      accountName: "",
+      accountUser:        "",
+      accountPicProfile : ""
+    });
+  
+  
+    (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+      oidcToken: accessToken,
+      accountId: accountId,
+      recoveryPk,
+      actions: syncActions
+    })
+      .then((res) => res.json())
+      .then(async (res) => {
+        setStatusMessage('done');
+      })
   }
 
   return (
@@ -394,7 +424,13 @@ function LoginWithSocialAuth() {
         <div>
         <h3 className='text-2xl font-semibold'>signed in</h3>
         <button className='px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150' onClick={logout}>Logout</button>
+        <div className="flex items-center justify-center h-screen dark:bg-gray-800">
+              <button onClick={hanleSync} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
+                  <span>Sync Profile Social</span>
+              </button>
+          </div>
         </div>
+        
         )
         
         : <div className="flex items-center justify-center h-screen dark:bg-gray-800">
