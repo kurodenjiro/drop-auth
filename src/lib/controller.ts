@@ -128,8 +128,7 @@ class FastAuthController {
     let keyPair = await this.getKey();
 
     if (!keyPair) {
-
-      const biometricKeyPair = KeyPair.fromRandom('ed25519');;
+      const biometricKeyPair = await this.getBiometricKey();
       await this.setKey(biometricKeyPair);
 
       keyPair = biometricKeyPair;
@@ -291,7 +290,7 @@ class FastAuthController {
     const keypair = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
 
     if (!keypair) {
-      return null;
+      throw new Error('Unable to get oidc keypair');
     }
 
     const signature = getUserCredentialsFrpSignature({

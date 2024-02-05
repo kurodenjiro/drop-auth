@@ -121,8 +121,7 @@ export const onSignIn = async ({
 }) => {
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const res =  await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-  const  accountIds = await res.json()
+  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
     .then((res) => res.json())
     .catch((err) => {
       console.log(err);
@@ -188,7 +187,6 @@ export const onSignIn = async ({
          if (publicKeyFak) {
            window.localStorage.setItem('webauthn_username', email);
          }
-         window.location.reload();
        }
      });
 };
@@ -266,28 +264,13 @@ function LoginWithSocialAuth() {
       
       const email = user.email;
       const success_url = window.location.origin;
-      let accountId = ""
-      let isRecovery = true;
-      //check accounts
-      const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-      if(recoveryPK){
-        const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-        const accountIds = await res.json();
-        console.log("accountIds",accountIds.length);
-        if(accountIds.length){
-          accountId = accountIds[0]
-        }else{
-          isRecovery = false ;
-        }
-        
-      }else{
-        isRecovery = false ;
-      }
 
-      
+      //check accounts
+      let accountId = window.fastAuthController.getAccountId()
+      console.log("accountId",accountId)
       const methodNames = "set";
       const contract_id = "v1.social08.testnet"
-     
+      let isRecovery = true;
 
       
       setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
@@ -307,7 +290,18 @@ function LoginWithSocialAuth() {
         publicKeyFak = keyPair.getPublicKey().toString();
         await window.fastAuthController.setKey(keyPair);
       
-        
+
+      if (!window.fastAuthController.getAccountId()) {
+        isRecovery = false
+        const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
+        if(isAvailable){
+          accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
+        }else{
+          accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
+        }
+        await window.fastAuthController.setAccountId(accountId);
+      }
+
       await window.fastAuthController.claimOidcToken(accessToken);
       const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
       window.firestoreController = new FirestoreController();
@@ -334,13 +328,7 @@ function LoginWithSocialAuth() {
         )
       }else{
       //  public_key_lak = publicKeyFak;
-      const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-      if(isAvailable){
-        accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-      }else{
-        accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()+`.${network.fastAuth.accountIdSuffix}`) ;
-      }
-      await window.fastAuthController.setAccountId(accountId);
+      setStatusMessage("creating new account")
         await onCreateAccount(
           {
             oidcKeypair,
