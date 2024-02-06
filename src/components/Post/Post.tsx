@@ -212,10 +212,12 @@ export default function Post(){
     const [amount, setAmount] = useState("");
     const [start, setStart] = useState("");
     const [end, setEnd] = useState("");
+    const [backgroundCover, setBackgroundCover] = useState("");
     const [loading, setLoading] = useState(false);
     const { authenticated } = useAuthState();
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
+    
     const navigate = useNavigate();
 
     const signIn = async (authType) => {
@@ -417,6 +419,7 @@ const hanleSync = async() =>{
                         // setDataDetail(dt.)
                        
                         setName(dt.name);
+                        setBackgroundCover(dt.backgroundCover);
                         setDescription(dt.description);
                         setLink(dt.link);
                         setAmount(dt.amount);
@@ -433,7 +436,7 @@ const hanleSync = async() =>{
     //console.log(name)
     //console.log(searchParams.get("mission_id"));
     return(
-        <div className="background">
+        <div className="background " style={{height:"100%"}}>
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
                 <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
@@ -461,6 +464,7 @@ const hanleSync = async() =>{
             <div className="container py-5 container-format">
             <div className="row mb-4 ">
                 <div className="col-lg-7 mx-auto d-flex flex-column">
+                <img className="object-contain " width={"500px"} src={backgroundCover}/>
                     <label className="title">{name}</label>
                     <span className="desc">{description}</span>
                     <span className="time text-white">{start} - {end} 12:00 GMT+07:00 </span>
@@ -492,7 +496,7 @@ const hanleSync = async() =>{
                         <h3 className="fs-4 text-white">Mission</h3>
                         <div className="px-3 py-2">
                             {link.map((lk,i)=>(
-                                <button onClick={()=>window.open(`${lk.link}`,'popup','width=600,height=600')} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                <button  disabled={authenticated ? true : false} onClick={()=>window.open(`${lk.link}`,'popup','width=600,height=600')} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                     <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                     </svg>
@@ -502,6 +506,18 @@ const hanleSync = async() =>{
                                     <span className="text-sm text-white">{lk.title}</span>
                                 </button>
                             ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="row mt-2">
+                <div className="col-lg-7 mx-auto">
+                    <div>
+                        <h3 className="fs-4 text-white">Claim Reward</h3>
+                        <div className="px-3 py-2">
+                        <button onClick={hanleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
+                                    <h3 className="text-sm text-white">Claim</h3>
+                                </button>
                         </div>
                     </div>
                 </div>
