@@ -212,6 +212,7 @@ export default function Post(){
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
     const [userId, setUserId] = useState("");
+    const [postId, setPostId] = useState(mission_id);
     const [accountId, setAccountId] = useState("");
     
     const navigate = useNavigate();
@@ -327,11 +328,12 @@ export default function Post(){
     }
       
       const checkTweetAction = async(link:any,action:any,userId:any,postId:any) =>{
+        console.log("check",link,action,userId,postId)
           //checkTweetAction(lk.link,true,"huunhan",lk.id)
         window.open(`${link}`,'popup','width=900,height=900')
         let data = JSON.stringify({
           contentId: link,
-          postId: Number(postId),
+          postId: postId,
           action: action,
           userCreated: userId
         });
@@ -401,8 +403,9 @@ export default function Post(){
             }
       
           useEffect(()=>{
+            let userId=""
             if(authenticated){
-              const userId =  window.localStorage.getItem("twitter-uid")
+               userId =  window.localStorage.getItem("twitter-uid")
               setUserId(userId) 
               const accountId =  window.localStorage.getItem("accountId")
               setAccountId(accountId)
@@ -410,7 +413,7 @@ export default function Post(){
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
                   const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
-                  console.log("getAction",getAction.data)
+                  console.log("getAction",postId,userId)
                   if(getData.data){
                       Object.values(getData.data.data).map((dt:any)=>{
                           if(dt!=undefined && dt._id==mission_id){ 
@@ -428,7 +431,7 @@ export default function Post(){
                                   let isAction = false;
       
                                   getAction.data.forEach((action:any) => {
-                                      if(link.link == action.contentId && action.userCreated == userId && action.postId == mission_id){
+                                      if(link.link == action.contentId && action.userCreated == userId && action.postId == postId){
                                           isAction=true
                                       }
                                   });
@@ -521,8 +524,8 @@ export default function Post(){
                           <div>
                               <h3 className="fs-4 text-white">Mission</h3>
                               <div className="px-3 py-2">
-                                  {link.map((lk,i)=>(
-                                      <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,userId,mission_id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                  {postId && userId && link.map((lk,i)=>(
+                                      <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,userId,postId)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                           <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                           </svg>
