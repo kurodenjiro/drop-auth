@@ -371,6 +371,7 @@ const signIn = async (authType) => {
 
       accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
+      window.localStorage.setItem("accountId",accountId)
       await onCreateAccount(
         {
           oidcKeypair,
@@ -389,6 +390,7 @@ const signIn = async (authType) => {
       )
     }else{
       setStatusMessage("logging...")
+      window.localStorage.setItem("accountId",accountIds[0])
       await onSignIn(
         {
           accessToken,
