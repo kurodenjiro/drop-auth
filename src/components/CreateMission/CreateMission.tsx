@@ -525,11 +525,11 @@ const hanleSync = async() =>{
                         </li>
                     </ul>
                     {authenticated ? (
-                      <div className='login'>
-                           <a  href={`https://testnet.nearblocks.io/address/${accountId}`} target="_blank" className="text-white accountid">Wallet: {accountId}</a>
-                           <span className="text-white accountid">Twitter: {userId}</span>
-                           <button className="btn btn-outline-success text-white" onClick={logout} >Logout</button>
-                       </div>
+                      <>
+                      <a href={`https://testnet.nearblocks.io/address/${accountId}`} target="_blank" className="btn btn-outline-success text-white">Wallet:{accountId}</a>
+                      <button className="btn btn-outline-success text-white">Twitter:{userId}</button>
+                      <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
+                      </>
                       
                     ) :(
                       <button className="btn btn-outline-success text-white" onClick={(e)=>signIn("twitter")} >Login</button>

@@ -52,10 +52,10 @@ export default function Home(){
                         </li>
                     </ul>
                     {authenticated && (
-                     <div className='login'>
-                        <a  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`} target="_blank" className="text-white accountid">Wallet: {window.localStorage.getItem("accountId")}</a>
-                        <span className="text-white accountid">Twitter: {window.localStorage.getItem("twitter-uid")}</span>
-                    </div>
+                        <>
+                        <a  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`}  className="btn btn-outline-success text-white" >{"Walllet:"+ window.localStorage.getItem("accountId")}</a>
+                        <button className="btn btn-outline-success text-white" >{"Twitter:"+ window.localStorage.getItem("twitter-uid")}</button>
+                        </>
                     )}
 
                 </div>
