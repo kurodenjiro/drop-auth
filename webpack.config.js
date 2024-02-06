@@ -20,7 +20,7 @@ module.exports = {
     }),
     new webpack.EnvironmentPlugin({
       DEBUG:                                true,
-      REACT_APP_BASE_PATH:                  '',
+      REACT_APP_BASE_PATH:                  'https://drop-auth.vercel.app/',
       NETWORK_ID:                           'testnet',
       RELAYER_URL:                          'http://relayer.dropwallet.io/relay',
       FIREBASE_API_KEY:                     'AIzaSyCE8LwSrTuYor8vPVhgR5gh5ZiqFkrC0B0',
