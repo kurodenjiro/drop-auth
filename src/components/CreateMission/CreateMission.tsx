@@ -228,7 +228,7 @@ function CreateMission() {
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
   const [defaultLink, setDefaultLink] = useState("");
-
+  const [accountId, setAccountId] = useState("");
   const logout = async () => {
     await firebaseAuth.signOut();
     // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
@@ -240,7 +240,11 @@ function CreateMission() {
 
 
   useEffect(()=>{
-
+    if(authenticated){
+      const accountId = window.localStorage.getItem("accountId")
+      console.log("accountId",accountId)
+      setAccountId(accountId)
+    }
     if(select=="like"){
       //https://twitter.com/0_bishi_7/status/1754587117966008752
       let tweet_id = defaultLink.split("/")[5]
@@ -371,6 +375,8 @@ const signIn = async (authType) => {
 
       accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
+      setAccountId(accountId)
+      
       window.localStorage.setItem("accountId",accountId)
       await onCreateAccount(
         {
@@ -391,6 +397,7 @@ const signIn = async (authType) => {
     }else{
       setStatusMessage("logging...")
       window.localStorage.setItem("accountId",accountIds[0])
+      setAccountId(accountIds[0])
       await onSignIn(
         {
           accessToken,
@@ -489,7 +496,11 @@ const hanleSync = async() =>{
                         </li>
                     </ul>
                     {authenticated ? (
+                      <>
+                      <button className="btn btn-outline-success text-white">{accountId}</button>
                       <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
+                      </>
+                      
                     ) :(
                       <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
                     )}
