@@ -20,6 +20,7 @@ import BN from 'bn.js';
 import { openToast } from '../../lib/Toast';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { useAuthState } from '../../lib/useAuthState';
+import axios from "axios";
 const {
   functionCall
   } = actionCreators;
@@ -236,6 +237,7 @@ function CreateMission() {
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
   const [defaultLink, setDefaultLink] = useState("");
+  const [ipfs, setIPFS] = useState("");
   const [loading, setLoading] = useState(false);
   const [accountId, setAccountId] = useState("")
 
@@ -297,6 +299,7 @@ function CreateMission() {
         timezone: timezone,
         amount: amount,
         perform:false,
+        ipfs_cid:ipfs,
         userCreated:userId
       })
     })
@@ -307,12 +310,47 @@ function CreateMission() {
     setSelect(e.target.value)
   }
 
-  const handleUpdateFile = (e:any) =>{
+  const handleUpdateFile = async(e:any) =>{
+    const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI4NzJiNmE0YS0xNzBkLTQzNDYtODMwMS1lYzA4YTUxNTk0N2UiLCJlbWFpbCI6InBpbmF0YUBtaW5vcml0eXByb2dyYW1tZXJzLm9yZyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImlkIjoiTllDMSIsImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxfV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJlNjE3YjU1NDY1M2Y2NWZjY2RmYiIsInNjb3BlZEtleVNlY3JldCI6ImE3ZjgzYTcyOGJlMzYxYjMxZmYyZWUxN2EwMWExZTcyNWI0OWE2ZGMyNjljYzcyYzIwZTk2YjYwMWRiZGI3ZjgiLCJpYXQiOjE2OTc2MjY5MDV9.5O4KzsBF8JYMIGDLC0vzc4YeGFeBeOPudYHr7YdvhVM"
     const data = new FileReader();
-    data.addEventListener('load',()=>{
+    
+    
+
+    data.addEventListener('load',async()=>{
       setImage(data.result)
-    })
+
+      const url = data.result as string
+
+       fetch(url)
+.then(async(res) => {
+
+  const formData = new FormData();
+  formData.append("file", await res.blob() );
+   await fetch(
+    "https://api.pinata.cloud/pinning/pinFileToIPFS",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${JWT}`,
+      },
+      body: formData,
+    }
+  ).then(async(res)=>{
+    const data =  await res.json()
+    setIPFS(data.IpfsHash)
+  });
+  
+})
+.then(console.log)
+
+    }) 
+    
+
+
+
+
     data.readAsDataURL(e.target.files[0])
+
   }
 
 
@@ -545,7 +583,7 @@ const hanleSync = async() =>{
 
   <div className="row">
     <div className="col-lg-7 mx-auto">
-    {authenticated ? 
+    {!authenticated ? 
         (
           <div className="form-format rounded-lg shadow-sm p-5">
             

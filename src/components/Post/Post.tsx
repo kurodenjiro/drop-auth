@@ -35,8 +35,6 @@ const providerTwiiter = new TwitterAuthProvider();
 export const signInWithGooglePopup = () => signInWithPopup(firebaseAuth, provider);
 export const signInWithTwitterPopup = () => signInWithPopup(firebaseAuth, providerTwiiter)
 
-
-
 const onCreateAccount = async ({
   oidcKeypair,
   accessToken,
@@ -207,6 +205,7 @@ export const onSignIn = async ({
 export default function Post(){
     const [searchParams] = useSearchParams();
     const [name, setName] = useState("");
+    const [ipfs, setIpfs] = useState("");
     const [description, setDescription] = useState("");
     const [link, setLink] = useState([]);
     const [amount, setAmount] = useState("");
@@ -359,45 +358,32 @@ export default function Post(){
         const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
         const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
         
-        console.log("recoveryPk",recoveryPK)
-        const syncActions = syncProfile({
-          accountId:   "",
-          accountName: "",
-          accountUser:        "",
-          accountPicProfile : ""
-        });
-       
         const gas = "300000000000000";
         const deposit = "50000000000000000000000";
-        // (window as any).fastAuthController.signAndSendAddKey({
-        //   contractId :"v1.social08.testnet", 
-        //   methodNames:"", 
-        //   allowance:"250000000000000", 
-        //   publicKey:recoveryPK,
-        // })
+
         const tokenId = Date.now() + "";
         (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
           receiverId :"genadrop-test.mpadev.testnet",
-          actions: [functionCall(
-            "set",
+          blockHeightTtl: 600,
+          actions: [
+            functionCall(
+            "nft_mint",
             {
-              data: {
-                  token_id: tokenId,
-                  metadata: {
-                    title: "title",
-                    description: "description",
-                    media: `https://byzantion.mypinata.cloud/ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z/0421.png`,
-                    reference: `ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z`,
-                  },
-                  receiver_id: accountIds[0]
-                }
+              token_id: tokenId,
+              metadata: {
+                title: name,
+                description: description,
+                media: `https://ipfs.io/ipfs/${ipfs}`,
+                reference: `ipfs/${ipfs}`,
               },
+              receiver_id: accountIds[0]
+            },
             new BN(gas),
             new BN(deposit))
             ]
         })
          alert("claim successful")
-          
+
       }
           const logout = async () => {
               await firebaseAuth.signOut();
@@ -422,7 +408,7 @@ export default function Post(){
                   console.log("getAction",postId,userId)
                   if(getData.data){
                       Object.values(getData.data.data).map((dt:any)=>{
-                          if(dt!=undefined && dt._id==mission_id){ 
+                          if(dt!=undefined && dt._id==mission_id){
                               setName(dt.name);
                               setBackgroundCover(dt.backgroundCover);
                               setDescription(dt.description);
@@ -430,6 +416,7 @@ export default function Post(){
                               setAmount(dt.amount);
                               setStart(dt.start);
                               setEnd(dt.end);
+                              setIpfs(dt.ipfs);
                               setLoading(true);
                               let action = [];
                               (dt.link).map((link:any)=>{
@@ -563,6 +550,7 @@ export default function Post(){
                               {authenticated ? (
                             <button onClick={hanleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
                             <h3 className="text-sm text-white">Claim</h3>
+                          
                           </button>
       
                   ):(
