@@ -468,8 +468,7 @@ const hanleSync = async() =>{
                     <label className="title">{name}</label>
                     <span className="desc">{description}</span>
                     <span className="time text-white">{start} - {end} 12:00 GMT+07:00 </span>
-                    <span className="text-white fs-6 mt-5">Prizes: {amount} NEAR</span>
-
+                    <span className="text-white fs-6 mt-3">Prizes: {amount} NEAR</span>
                 </div>
             </div>
             <div className="row mt-2">
