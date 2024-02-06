@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useEffect ,useState } from 'react';
+import React, { useEffect ,useState,CSSProperties } from 'react';
 import { useForm } from 'react-hook-form';
 import { getAuth, signInWithPopup, GoogleAuthProvider,TwitterAuthProvider, signOut } from "firebase/auth";
 import { useNavigate, useRoutes, useSearchParams } from 'react-router-dom';
@@ -27,7 +27,15 @@ const {
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
-import axios from "axios"
+import CircleLoader from "react-spinners/CircleLoader"
+
+const override: CSSProperties = {
+  display: "block",
+  margin: "0 auto",
+  borderColor: "red",
+  border: "2px soild #ffffff"
+}
+
 // whenever a user interacts with the provider, we force them to select an account
 provider.setCustomParameters({   
     prompt : "select_account"
@@ -228,6 +236,7 @@ function CreateMission() {
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
   const [defaultLink, setDefaultLink] = useState("");
+  const [loading,setLoading] = useState(false);
 
   const logout = async () => {
     await firebaseAuth.signOut();
@@ -285,7 +294,9 @@ function CreateMission() {
         userCreated:userId
       })
     })
-    console.log("res",res)
+    if(res.ok){
+      setLoading(true)
+    }
   
   }
   const handleSelect= (e:any) =>{
@@ -307,10 +318,11 @@ console.log(image)
 
 const signIn = async (authType) => {
   try {
+    setLoading(true)
     const {user} = await signInWithTwitterPopup();
     console.log("user",user);
    // if (!user || !user.emailVerified) return;
-    
+
     const accessToken = await user.getIdToken();
     setUserId(user.providerData[0].uid)
     const email = user.providerData[0].uid;
@@ -404,9 +416,11 @@ const signIn = async (authType) => {
           recoveryPK
         }
       )
+      setLoading(false)
     }
 
   } catch (error) {
+    setLoading(false)
     console.log('error', error);
     captureException(error);
   }
@@ -471,7 +485,20 @@ const hanleSync = async() =>{
 }
   return (
   <div className='bg-slate-300'>
+      {loading&&<div className="loading">
+        <div className='format-loading'>
+        <CircleLoader
+                color={"#000000"}
+                loading={loading}
+                cssOverride={override}
+                size={200}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+                    />
+        </div>    
+      </div>}
   <nav className="navbar navbar-expand-lg bg-body-tertiary">
+
             <div className="container-fluid nav-format">
                 <a className="navbar-brand text-decoration-none fs-4 font-weight-bold text-white" href={window.location.origin+"/"}>BlockQuest</a>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -489,13 +516,13 @@ const hanleSync = async() =>{
                     {authenticated ? (
                       <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
                     ) :(
-                      <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
+                      <button className="btn btn-outline-success text-white" onClick={(e)=>signIn("twitter")} >Login</button>
                     )}
                     
                 </div>
             </div>
             </nav>
-
+            
 <div className="container py-5 bg-slate-300">
 
   <div className="row mb-4">
@@ -512,11 +539,13 @@ const hanleSync = async() =>{
                 )}
     </div>
   </div>
+
   <div className="row">
     <div className="col-lg-7 mx-auto">
-    {authenticated ? 
+    {!authenticated ? 
         (
           <div className="form-format rounded-lg shadow-sm p-5">
+            
           <div className="tab-content">
             <div id="nav-tab-card" className="tab-pane fade show active">
               {/* <p className="alert alert-success">Some text success or error</p> */}
@@ -556,7 +585,7 @@ const hanleSync = async() =>{
                   </div>
                 </div>
   
-                <label className='mt-3 fs-6 text-black'>Upload cover</label>
+                <label className='mt-3 fs-6 text-black'>Upload NFT</label>
                 <div className="form-group mt border">
                   <input type="file" onChange={handleUpdateFile}/>
                 </div>
@@ -590,7 +619,7 @@ const hanleSync = async() =>{
               <form className="form mt-2">
                 <div className="form-group mt-2">
                   <label className='fs-6 text-black'>Amount</label>
-                  <input onChange={(e)=>setAmount(e.target.value)} type="text" placeholder="10 NEAR" required className="form-control"/>
+                  <input onChange={(e)=>setAmount(e.target.value)} type="text" placeholder="1 NFT" required className="form-control"/>
                 </div>
                 <div className="row mt-2 g-2">
                   <label className='col fs-6 text-black'>Distribute</label>
@@ -630,6 +659,7 @@ const hanleSync = async() =>{
     </div>
   </div>
 </div>
+
   </div>
   );
 }

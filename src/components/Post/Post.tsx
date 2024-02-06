@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,CSSProperties } from "react";
 import axios from "axios";
 import { useSearchParams ,useNavigate } from "react-router-dom";
 import { useAuthState } from '../../lib/useAuthState';
@@ -11,7 +11,13 @@ import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 import { openToast } from '../../lib/Toast';
 import FastAuthController from '../../lib/controller';
+import CircleLoader from "react-spinners/CircleLoader"
 
+const override: CSSProperties = {
+  display: "block",
+  margin: "0 auto",
+  borderColor: "red",
+}
 import BN from 'bn.js';
 
 import {
@@ -443,7 +449,7 @@ export default function Post(){
           //console.log(name)
           //console.log(searchParams.get("mission_id"));
           return(
-              <div className="background " style={{height:"100%"}}>
+              <div className="background " style={{height:loading?"100%":"100vh"}}>
                   <nav className="navbar navbar-expand-lg bg-body-tertiary">
                   <div className="container-fluid nav-format">
                       <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
@@ -462,7 +468,7 @@ export default function Post(){
                           {authenticated ? (
                             <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
                           ) :(
-                            <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
+                            <button className="btn btn-outline-success text-white" onClick={()=>signIn("twitter")} >Login</button>
                           )}
                       </div>
                   </div>
@@ -472,10 +478,10 @@ export default function Post(){
                   <div className="row mb-4 ">
                       <div className="col-lg-7 mx-auto d-flex flex-column">
                       <img className="object-contain " width={"500px"} src={backgroundCover}/>
-                          <label className="title">{name}</label>
+                          <label className="title mt-2">{name}</label>
                           <span className="desc">{description}</span>
                           <span className="time text-white">{start} - {end} 12:00 GMT+07:00 </span>
-                          <span className="text-white fs-6 mt-3">Prizes: {amount} NEAR</span>
+                          <span className="text-white fs-6 mt-3">Prizes: {amount} NFT</span>
                       </div>
                   </div>
                   {authenticated && (
@@ -491,7 +497,7 @@ export default function Post(){
                                       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
                                       <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
                                       </svg>
-                                      <span className="text-sm text-white">Login</span>
+                                      <span className="text-sm text-white">Login Twitter</span>
                                   </button>
                           </div>
                       </div>
@@ -548,14 +554,16 @@ export default function Post(){
                   </div>
               </div>
                   ):(
-                      <div className="container py-5 container-format">
-                          <div className="row mt-2">
-                      <div className="col-lg-7 mx-auto">
-                          <h3 className="text-white" >Loading</h3>
-                      </div>
-                      </div>
-      
-                      </div>
+                    <div className="format-loading">
+                    <CircleLoader
+            color={"#ffffff"}
+            loading={true}
+            cssOverride={override}
+            size={200}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+                />
+                </div>
       
                   )}
       
