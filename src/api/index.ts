@@ -75,7 +75,7 @@ export const createNEARAccount = async ({
   fullAccessKeys?: string[],
   limitedAccessKeys?: LimitedAccessKey[],
   accessToken: string,
-  oidcKeypair: KeyPair
+  oidcKeypair: KeyPair,
 }): Promise<NewAccountResponse> => {
   const CLAIM_SALT = CLAIM + 2;
   const signature = getUserCredentialsFrpSignature({
@@ -109,6 +109,7 @@ export const createNEARAccount = async ({
   //   // throw new Error('Network response was not ok');
   //   return response.json();
   // }
+
 
   return response.json();
 };
