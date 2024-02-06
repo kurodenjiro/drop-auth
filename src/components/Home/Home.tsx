@@ -1,14 +1,21 @@
-import React,{useState} from "react";
+import React,{useEffect, useState} from "react";
 import axios from "axios";
 
 
 export default function Home(){
     const [data, setData] = useState([]);
 
-    axios.get('http://localhost:8080/api/dropauth/getData',{})
-    .then((res)=>{
-        setData(res.data)
-    })
+    useEffect(()=>{
+        axios('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth', {
+            method: 'get',
+            data: {},
+        }).then((response) => {
+            setData(response.data.data)
+            console.log("res",response.data)
+        }).catch((e) => {
+            console.log(e);
+        });
+    },[])
     const text_truncate = function(str:string, length:number, ending:string) {
         if (length == null) {
           length = 100;

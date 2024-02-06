@@ -455,9 +455,10 @@ const hanleSync = async() =>{
 
     useEffect(()=>{
         const getData = ()=>{
-            axios.get('http://localhost:8080/api/dropauth/getData',{})
+            axios.get('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth',{})
             .then((res)=>{
-                setData(res&&res.data)
+                setData(res&&res.data.data)
+                console.log(res.data)
             })
         }
         getData();
