@@ -32,6 +32,10 @@ const dataSchema = new mongoose.Schema({
         required: true,
         type: Array
     },
+    action:{
+        required: true,
+        type: String
+    },
     timezone:{
         type:String,
     },
@@ -65,6 +69,7 @@ app.post("/api/dropauth/postData",async(req,res,next)=>{
         start: req.body.start,
         end: req.body.end,
         backgroundCover:req.body.backgroundCover,
+        action:req.body.action,
         link: req.body.link,
         timezone: req.body.timezone,
         amount: req.body.amount

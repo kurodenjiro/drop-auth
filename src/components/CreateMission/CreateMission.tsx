@@ -231,6 +231,7 @@ function CreateMission() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [link, setLink] = useState([]);
+  const [ation, setAction] = useState("");
   const [amount, setAmount] = useState("");
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
@@ -257,6 +258,7 @@ function CreateMission() {
         title:`Like @${username} Tweet`,
         link:`https://twitter.com/intent/like?tweet_id=${tweet_id}`
       }))
+      
     }else if(select=="follow"){
       let screen_name = defaultLink.split("/")[3]
       setLink(l=>l.concat({
@@ -270,6 +272,7 @@ function CreateMission() {
         link:`https://twitter.com/intent/retweet?tweet_id=${tweet_id}`
       }))
     }
+    setAction(select)
   },[select])
 
 
@@ -281,6 +284,7 @@ function CreateMission() {
       end: end,
       backgroundCover: image,
       link: link,
+      action:action,
       timezone: timezone,
       amount: amount
     } )
@@ -325,8 +329,6 @@ const signIn = async (authType) => {
     const methodNames = "set";
     const contract_id = "v1.social08.testnet"
     let isRecovery = true;
-
-    
   
 
     // claim the oidc token
