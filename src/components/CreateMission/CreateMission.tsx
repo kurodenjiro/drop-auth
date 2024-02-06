@@ -268,10 +268,10 @@ function CreateMission() {
   },[select])
 
 
-  const handleInsertData = () =>{
-    axios('https://blockquest-api.vercel.app/api/dropauth', {
+  const handleInsertData = async() =>{
+    const res = await fetch('https://blockquest-api.vercel.app/api/dropauth', {
       method:"POST",
-      data:{
+      body:JSON.stringify({
         name: name,
         description: description,
         start: start,
@@ -283,14 +283,9 @@ function CreateMission() {
         amount: amount,
         perform:false,
         userCreated:userId
-      }
-    } )
-    .then(function (response) {
-      console.log(response);
+      })
     })
-    .catch(function (error) {
-      console.log(error);
-    });
+    console.log("res",res)
   
   }
   const handleSelect= (e:any) =>{
