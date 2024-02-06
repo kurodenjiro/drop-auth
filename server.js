@@ -1,13 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose")
 const cors = require("cors")
-
+require("dotenv").config()
 
 const app = express();
 app.use(cors());
 app.use(express.json({limit: '50mb'}));
 
-const connect_string = "mongodb+srv://louisdevzz04:vohuunhan1310@cluster0.zmwbg2i.mongodb.net/dropauth?retryWrites=true&w=majority"
+const connect_string = process.env.MONGODB
 const dataSchema = new mongoose.Schema({
     name: {
         required: true,

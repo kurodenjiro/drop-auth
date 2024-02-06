@@ -217,9 +217,6 @@ const schema = yup.object().shape({
 });
 
 
-
-
-
 function CreateMission() {
   const navigate = useNavigate();
   const { authenticated } = useAuthState();
