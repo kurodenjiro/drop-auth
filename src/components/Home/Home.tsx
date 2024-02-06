@@ -45,7 +45,7 @@ export default function Home(){
                     </ul>
                     {authenticated && (
                     <>
-                    <button className="btn btn-outline-success text-white" >{"Walllet:"+ window.localStorage.getItem("accountId")}</button>
+                    <a  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`}  className="btn btn-outline-success text-white" >{"Walllet:"+ window.localStorage.getItem("accountId")}</a>
                     <button className="btn btn-outline-success text-white" >{"Twitter:"+ window.localStorage.getItem("twitter-uid")}</button>
                     </>
                     )}

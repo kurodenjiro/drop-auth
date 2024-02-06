@@ -499,7 +499,7 @@ const hanleSync = async() =>{
                     </ul>
                     {authenticated ? (
                       <>
-                      <button className="btn btn-outline-success text-white">Wallet:{accountId}</button>
+                      <a href={`https://testnet.nearblocks.io/address/${accountId}`} target="_blank" className="btn btn-outline-success text-white">Wallet:{accountId}</a>
                       <button className="btn btn-outline-success text-white">Twitter:{userId}</button>
                       <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
                       </>
