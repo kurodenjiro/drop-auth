@@ -146,7 +146,7 @@ export const onSignIn = async ({
        const failure = res['Receipts Outcome']
          .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
        if (failure?.ActionError?.kind?.LackBalanceForState) {
-
+        window.location.reload();
        } else {
          await checkFirestoreReady();
           
@@ -231,7 +231,7 @@ function CreateMission() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [link, setLink] = useState([]);
-  const [ation, setAction] = useState("");
+  const [action, setAction] = useState("");
   const [amount, setAmount] = useState("");
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
@@ -286,7 +286,8 @@ function CreateMission() {
       link: link,
       action:action,
       timezone: timezone,
-      amount: amount
+      amount: amount,
+      userIdToken:firebaseAuth.currentUser.getIdToken()
     } )
     .then(function (response) {
       console.log(response);
@@ -315,9 +316,11 @@ console.log(image)
 
 const signIn = async (authType) => {
   try {
-    const {user} = authType == "google" ? await signInWithGooglePopup() : await signInWithTwitterPopup();
-    if (!user || !user.emailVerified) return;
-
+    const {user} = await signInWithTwitterPopup();
+    console.log("user",user);
+    firebaseAuth.currentUser
+   // if (!user || !user.emailVerified) return;
+    
     const accessToken = await user.getIdToken();
     
     const email = user.email;
@@ -349,12 +352,7 @@ const signIn = async (authType) => {
 
     if (!window.fastAuthController.getAccountId()) {
       isRecovery = false
-      const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-      if(isAvailable){
-        accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-      }else{
-        accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
-      }
+      accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
     }
 
@@ -380,12 +378,8 @@ const signIn = async (authType) => {
    
     if (!accountIds.length) {
       let accountId : string;
-      const isAvailable = await checkIsAccountAvailable(email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-      if(isAvailable){
-        accountId = email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-      }else{
-        accountId = email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-      }
+
+      accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
       await onCreateAccount(
         {
