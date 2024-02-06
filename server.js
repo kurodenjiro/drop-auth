@@ -6,6 +6,7 @@ const cors = require("cors")
 const app = express();
 app.use(cors());
 app.use(express.json({limit: '50mb'}));
+app.use(cors())
 
 const connect_string = "mongodb+srv://louisdevzz04:vohuunhan1310@cluster0.zmwbg2i.mongodb.net/dropauth?retryWrites=true&w=majority"
 const dataSchema = new mongoose.Schema({
@@ -53,7 +54,22 @@ const dataSchema = new mongoose.Schema({
     }
 
 })
+const actionSchema = new mongoose.Schema({
+    contentId:{
+        required: true,
+        type: String
+    },
+    action:{
+        required: true,
+        type: String
+    },
+    userCreated:{
+        required: true,
+        type: String
+    },
+})
 const Model = mongoose.model('Data', dataSchema)
+const actionModel = mongoose.model('actionData', actionSchema)
 mongoose.connect(connect_string)
 const database = mongoose.connection
 
@@ -83,6 +99,21 @@ app.post("/api/dropauth/postData",async(req,res,next)=>{
         link: req.body.link,
         timezone: req.body.timezone,
         amount: req.body.amount
+    }) 
+    try{
+        const dataToSave = await data.save();
+        res.status(200).json(dataToSave)
+    }
+    catch(error){
+        res.status(400).json({message: error.message})
+    }
+})
+
+app.post("/api/dropauth/postAction",async(req,res,next)=>{
+    const data = new actionModel({
+        contentId:req.body.id,
+        action:req.body.action,
+        userCreated:req.body.userCreated,
     }) 
     try{
         const dataToSave = await data.save();
