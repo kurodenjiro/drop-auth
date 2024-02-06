@@ -242,8 +242,9 @@ function CreateMission() {
   useEffect(()=>{
     if(authenticated){
       const accountId = window.localStorage.getItem("accountId")
-      console.log("accountId",accountId)
       setAccountId(accountId)
+      const userId = window.localStorage.getItem("twitter-uid");
+      setUserId(userId)
     }
     if(select=="like"){
       //https://twitter.com/0_bishi_7/status/1754587117966008752
