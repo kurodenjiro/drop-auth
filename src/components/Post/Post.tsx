@@ -383,32 +383,23 @@ const hanleSync = async() =>{
   //   allowance:"250000000000000", 
   //   publicKey:recoveryPK,
   // })
+  const tokenId = Date.now() + "";
   (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
-    receiverId :"v1.social08.testnet",
+    receiverId :"genadrop-test.mpadev.testnet",
     actions: [functionCall(
       "set",
       {
         data: {
-          [accountIds[0]]: {
-              profile: {
-                  name:  "MPC x",
-                  description: "MPC sync with ",
-                  linktree: {
-                      gmail: "",
-                  },
-                  image: {
-                    ipfs_cid: ""
-                  },
-                  tags: {
-                    BlockQuest: "",
-                    near: "",
-                    wallet: ""
-                  }
-                }
-            }
-        }
-      
-      },
+            token_id: tokenId,
+            metadata: {
+              title: "title",
+              description: "description",
+              media: `https://byzantion.mypinata.cloud/ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
+              reference: `ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
+            },
+            receiver_id: accountIds[0]
+          }
+        },
       new BN(gas),
       new BN(deposit))
       ]
