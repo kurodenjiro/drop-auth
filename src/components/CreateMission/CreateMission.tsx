@@ -632,7 +632,7 @@ const hanleSync = async() =>{
                                     <span className="text-sm text-white text-center">Login Twitter</span>
                                 </button>
           </div>
-          <div data-test-id="callback-status-message">{statusMessage}</div>
+          <h2 data-test-id="callback-status-message">{statusMessage}</h2>
         </div>
         
         }
