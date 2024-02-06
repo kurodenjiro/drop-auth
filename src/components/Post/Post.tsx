@@ -469,8 +469,9 @@ const hanleSync = async() =>{
                 });
             }
         }
+        getData()
         
-    },[data])
+    },[])
     //console.log(name)
     //console.log(searchParams.get("mission_id"));
     return(
