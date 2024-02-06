@@ -141,32 +141,23 @@ export const onSignIn = async ({
      recoveryPK,
      actions:   addKeyActions
    })
-     .then((res) => res.json())
-     .then(async (res) => {
-       const failure = res['Receipts Outcome']
-         .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-       if (failure?.ActionError?.kind?.LackBalanceForState) {
-
-       } else {
-         await checkFirestoreReady();
+     await checkFirestoreReady();
           
-         if (!window.firestoreController) {
-           (window as any).firestoreController = new FirestoreController();
-         }
-         await window.firestoreController.addDeviceCollection({
-           fakPublicKey: onlyAddLak ? null : publicKeyFak,
-           lakPublicKey: public_key_lak,
-           gateway,
-         });
- 
-         setStatusMessage('Account recovered successfully!');
- 
-         if (publicKeyFak) {
-           window.localStorage.setItem('webauthn_username', email);
-         }
-         window.location.reload();
-       }
+     if (!window.firestoreController) {
+       (window as any).firestoreController = new FirestoreController();
+     }
+     await window.firestoreController.addDeviceCollection({
+       fakPublicKey: onlyAddLak ? null : publicKeyFak,
+       lakPublicKey: public_key_lak,
+       gateway,
      });
+
+     setStatusMessage('Account recovered successfully!');
+
+     if (publicKeyFak) {
+       window.localStorage.setItem('webauthn_username', email);
+     }
+     window.location.reload();
 };
 
 
@@ -229,8 +220,10 @@ function CreateMission() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [start, setStart] = useState("");
+  const [userId, setUserId] = useState("");
   const [end, setEnd] = useState("");
   const [link, setLink] = useState([]);
+  const [action, setAction] = useState("");
   const [amount, setAmount] = useState("");
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
@@ -257,6 +250,7 @@ function CreateMission() {
         title:`Like @${username} Tweet`,
         link:`https://twitter.com/intent/like?tweet_id=${tweet_id}`
       }))
+      
     }else if(select=="follow"){
       let screen_name = defaultLink.split("/")[3]
       setLink(l=>l.concat({
@@ -270,6 +264,7 @@ function CreateMission() {
         link:`https://twitter.com/intent/retweet?tweet_id=${tweet_id}`
       }))
     }
+    setAction(select)
   },[select])
 
 
@@ -281,8 +276,11 @@ function CreateMission() {
       end: end,
       backgroundCover: image,
       link: link,
+      action:action,
       timezone: timezone,
-      amount: amount
+      amount: amount,
+      perform:false,
+      userCreated:userId
     } )
     .then(function (response) {
       console.log(response);
@@ -311,12 +309,13 @@ console.log(image)
 
 const signIn = async (authType) => {
   try {
-    const {user} = authType == "google" ? await signInWithGooglePopup() : await signInWithTwitterPopup();
-    if (!user || !user.emailVerified) return;
-
-    const accessToken = await user.getIdToken();
+    const {user} = await signInWithTwitterPopup();
+    console.log("user",user);
+   // if (!user || !user.emailVerified) return;
     
-    const email = user.email;
+    const accessToken = await user.getIdToken();
+    setUserId(user.providerData[0].uid)
+    const email = user.providerData[0].uid;
     const success_url = window.location.origin;
 
     //check accounts
@@ -325,8 +324,6 @@ const signIn = async (authType) => {
     const methodNames = "set";
     const contract_id = "v1.social08.testnet"
     let isRecovery = true;
-
-    
   
 
     // claim the oidc token
@@ -347,12 +344,7 @@ const signIn = async (authType) => {
 
     if (!window.fastAuthController.getAccountId()) {
       isRecovery = false
-      const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-      if(isAvailable){
-        accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-      }else{
-        accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
-      }
+      accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
     }
 
@@ -378,12 +370,8 @@ const signIn = async (authType) => {
    
     if (!accountIds.length) {
       let accountId : string;
-      const isAvailable = await checkIsAccountAvailable(email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-      if(isAvailable){
-        accountId = email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-      }else{
-        accountId = email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-      }
+
+      accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
       await onCreateAccount(
         {
@@ -635,7 +623,7 @@ const hanleSync = async() =>{
                                     <span className="text-sm text-white text-center">Login Twitter</span>
                                 </button>
           </div>
-          <div data-test-id="callback-status-message">{statusMessage}</div>
+          <h2 data-test-id="callback-status-message">{statusMessage}</h2>
         </div>
         
         }
