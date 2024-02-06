@@ -394,8 +394,8 @@ const hanleSync = async() =>{
             metadata: {
               title: "title",
               description: "description",
-              media: `https://byzantion.mypinata.cloud/ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
-              reference: `ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
+              media: `https://byzantion.mypinata.cloud/ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z/0421.png`,
+              reference: `ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z`,
             },
             receiver_id: accountIds[0]
           }
