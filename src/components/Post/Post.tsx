@@ -386,10 +386,7 @@ const hanleSync = async() =>{
       new BN(deposit))
       ]
   })
-    .then((res) => res.json())
-    .then(async (res) => {
-      setStatusMessage('done');
-    })
+   alert("claim successful")
     
 }
     const logout = async () => {
