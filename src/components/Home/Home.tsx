@@ -6,15 +6,11 @@ export default function Home(){
     const [data, setData] = useState([]);
 
     useEffect(()=>{
-        axios('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth', {
-            method: 'get',
-            data: {},
-        }).then((response) => {
-            setData(response.data.data)
-            console.log("res",response.data)
-        }).catch((e) => {
-            console.log(e);
-        });
+        axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
+            .then((res)=>{
+                setData(res&&res.data.data)
+                console.log(res.data)
+            });
     },[])
     const text_truncate = function(str:string, length:number, ending:string) {
         if (length == null) {

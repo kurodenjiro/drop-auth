@@ -219,7 +219,9 @@ export default function Post(){
     const { authenticated } = useAuthState();
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
-    
+    const [checkId, setCheckId] = useState([]);
+    const [title, setTitleLink] = useState("");
+    const [action, setAction] = useState(false);
     const navigate = useNavigate();
 
     const signIn = async (authType) => {
@@ -338,87 +340,73 @@ export default function Post(){
           captureException(error);
         }
       }
-
-      
-      const checkTweetAction = async(link,action,userId,postId) =>{
-
+      const checkTweetAction = async(link:any,action:any,userId:any,postId:any) =>{
+          //checkTweetAction(lk.link,true,"huunhan",lk.id)
         window.open(`${link}`,'popup','width=900,height=900')
-        const  runCheck = async() => {
-            axios.post('http://localhost:8080/api/dropauth/postData', {
-                contentId:link,
-                postId:postId,
-                action:action,
-                userCreated:userId,
-              } )
-              .then(function (response) {
-                console.log(response);
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
-        }
-        runCheck()
-        setTimeout(runCheck, 5000)
+        let data = {
+          contentId: link,
+          postId: Number(postId),
+          action: action,
+          userCreated: userId
+        };
+        console.log("data",data)
+        await axios('https://blockquest-api.vercel.app/api/dropauth/postAction',{method:"POST",data:data})
+        .then((res)=>{
+          console.log(res,"res")
+        })
+        
 
-
+        
       }
-const hanleSync = async() =>{
-  const accessToken = await firebaseAuth.currentUser.getIdToken()
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
-  
-  console.log("recoveryPk",recoveryPK)
-  const syncActions = syncProfile({
-    accountId:   "",
-    accountName: "",
-    accountUser:        "",
-    accountPicProfile : ""
-  });
- 
-  const gas = "300000000000000";
-  const deposit = "50000000000000000000000";
-  // (window as any).fastAuthController.signAndSendAddKey({
-  //   contractId :"v1.social08.testnet", 
-  //   methodNames:"", 
-  //   allowance:"250000000000000", 
-  //   publicKey:recoveryPK,
-  // })
-  (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
-    receiverId :"v1.social08.testnet",
-    actions: [functionCall(
-      "set",
-      {
-        data: {
-          [accountIds[0]]: {
-              profile: {
-                  name:  "MPC x",
-                  description: "MPC sync with ",
-                  linktree: {
-                      gmail: "",
+
+      const hanleSync = async() =>{
+        const accessToken = await firebaseAuth.currentUser.getIdToken()
+        const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+        const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
+        
+        console.log("recoveryPk",recoveryPK)
+        const syncActions = syncProfile({
+          accountId:   "",
+          accountName: "",
+          accountUser:        "",
+          accountPicProfile : ""
+        });
+       
+        const gas = "300000000000000";
+        const deposit = "50000000000000000000000";
+        // (window as any).fastAuthController.signAndSendAddKey({
+        //   contractId :"v1.social08.testnet", 
+        //   methodNames:"", 
+        //   allowance:"250000000000000", 
+        //   publicKey:recoveryPK,
+        // })
+        const tokenId = Date.now() + "";
+        (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
+          receiverId :"genadrop-test.mpadev.testnet",
+          actions: [functionCall(
+            "set",
+            {
+              data: {
+                  token_id: tokenId,
+                  metadata: {
+                    title: "title",
+                    description: "description",
+                    media: `https://byzantion.mypinata.cloud/ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
+                    reference: `ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
                   },
-                  image: {
-                    ipfs_cid: ""
-                  },
-                  tags: {
-                    BlockQuest: "",
-                    near: "",
-                    wallet: ""
-                  }
+                  receiver_id: accountIds[0]
                 }
-            }
-        }
-      
-      },
-      new BN(gas),
-      new BN(deposit))
-      ]
-  })
-    .then((res) => res.json())
-    .then(async (res) => {
-      setStatusMessage('done');
-    })
-    
-}
+              },
+            new BN(gas),
+            new BN(deposit))
+            ]
+        })
+          .then((res) => res.json())
+          .then(async (res) => {
+            setStatusMessage('done');
+          })
+          
+      }
     const logout = async () => {
         await firebaseAuth.signOut();
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
@@ -430,35 +418,52 @@ const hanleSync = async() =>{
 
     useEffect(()=>{
         const getData = ()=>{
-            axios.get('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth',{})
-            .then((res)=>{
+            axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
+            .then(async(res)=>{
                 setData(res&&res.data.data)
-                console.log(res.data)
-            })
-        }
-        getData();
-        const getDataDetail = () =>{
-            if(data){
-                data.map((dt)=>{
-                    //setDataDetail(dt)
+                
+            const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
+            let action = [];
+            if(res.data.data){
+               Object.values(res.data.data).map((dt:any)=>{
+                //console.log(dt)
                     if(dt!=undefined && dt._id==mission_id){
-                        // setDataDetail(dt.)
                         setName(dt.name);
                         setBackgroundCover(dt.backgroundCover);
-                        setDescription(dt.description);
-                        setLink(dt.link);
+                        setDescription(dt.description); 
                         setAmount(dt.amount);
+                        setLink(dt.link)
                         setStart(dt.start);
                         setEnd(dt.end);
                         setLoading(true);
+                        (dt.link).forEach((link:any)=>{
+                          let isAction = false;
+                          (getAction.data).forEach(action => {
+                              if(link.id == action.postId){
+                                  isAction=true
+                              }
+                              //console.log(action)
+                          });
+                          action.push({
+                              link:link.link,
+                              title:link.title,
+                              disable:isAction,
+                              id: link.id,
+                          })
+                          setLink(action);
+                      })
+                      
                     }
                 })
             }
+            })
         }
-        getDataDetail()
+        getData();
+
         
-    },[data])
-    //console.log(name)
+    },[data,link])
+    
+    console.log("link",link)
     //console.log(searchParams.get("mission_id"));
     return(
         <div className="background " style={{height:"100%"}}>
@@ -523,16 +528,29 @@ const hanleSync = async() =>{
                     <div>
                         <h3 className="fs-4 text-white">Mission</h3>
                         <div className="px-3 py-2">
-                            {link.map((lk,i)=>(
-                                <button   onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated,link.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                            {/* <button className="bg-transparent text-decoration-none">
+                                {link.map((lk:any)=>(
+                                   <div className="px-3 py-2 btn btn-m btn-ms ">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
-                                    <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
-                                    </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
-                                    <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
-                                    </svg>
-                                    <span className="text-sm text-white">{lk.title}</span>
-                                </button>
+                                   <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                                   </svg>
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                                   <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                                   </svg>
+                                   <span className="text-sm text-white">{title}</span>
+                                   </div>
+                                ))}
+                              </button> */}
+                            {link.map((lk,i)=>(
+                             <button disabled={lk.action} onClick={()=>checkTweetAction(lk.link,true,"huunhan",lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
+                             <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                             </svg>
+                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                             <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                             </svg>
+                             <span className="text-sm text-white">{lk.title}</span>
+                            </button>
                             ))}
                         </div>
                     </div>
