@@ -498,7 +498,8 @@ const hanleSync = async() =>{
                     </ul>
                     {authenticated ? (
                       <>
-                      <button className="btn btn-outline-success text-white">{accountId}</button>
+                      <button className="btn btn-outline-success text-white">Wallet:{accountId}</button>
+                      <button className="btn btn-outline-success text-white">Twitter:{userId}</button>
                       <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
                       </>
                       

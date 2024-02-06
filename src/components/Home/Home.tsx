@@ -1,10 +1,10 @@
 import React,{useEffect, useState} from "react";
 import axios from "axios";
-
+import { useAuthState } from '../../lib/useAuthState';
 
 export default function Home(){
     const [data, setData] = useState([]);
-
+    const { authenticated } = useAuthState();
     useEffect(()=>{
         axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
             .then((res)=>{
@@ -43,7 +43,13 @@ export default function Home(){
                         <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
                         </li>
                     </ul>
-                    <button className="btn btn-outline-success text-white" type="submit">Login</button>
+                    {authenticated && (
+                    <>
+                    <button className="btn btn-outline-success text-white" >{"Walllet:"+ window.localStorage.getItem("accountId")}</button>
+                    <button className="btn btn-outline-success text-white" >{"Twitter:"+ window.localStorage.getItem("twitter-uid")}</button>
+                    </>
+                    )}
+
                 </div>
             </div>
             </nav>

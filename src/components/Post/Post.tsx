@@ -212,6 +212,7 @@ export default function Post(){
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
     const [userId, setUserId] = useState("");
+    const [accountId, setAccountId] = useState("");
     
     const navigate = useNavigate();
 
@@ -403,6 +404,8 @@ export default function Post(){
             if(authenticated){
               const userId =  window.localStorage.getItem("twitter-uid")
               setUserId(userId) 
+              const accountId =  window.localStorage.getItem("accountId")
+              setAccountId(accountId)
             }
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
@@ -468,7 +471,12 @@ export default function Post(){
                               </li>
                           </ul>
                           {authenticated ? (
+                            <>
+                            <button className="btn btn-outline-success text-white" >Wallet:{accountId}</button>
+                            <button className="btn btn-outline-success text-white" >Twitter:{userId}</button>
                             <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
+                            </>
+                            
                           ) :(
                             <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
                           )}
