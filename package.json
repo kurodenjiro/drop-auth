@@ -5,7 +5,7 @@
   "main": "src/index.html",
   "scripts": {
     "a": "concurrently --kill-others \"nodemon server.js\" \"webpack serve --mode development --history-api-fallback\"",
-    "start": "concurrently --kill-others \"nodemon server.js\" \"webpack serve --mode development --history-api-fallback\"",
+    "start": "webpack serve --mode development --history-api-fallback",
     "bundle": "webpack build --mode production --output-public-path /fastauth/",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",

@@ -405,7 +405,7 @@ const hanleSync = async() =>{
 
     useEffect(()=>{
         const getData = ()=>{
-            axios.get('http://localhost:8080/api/dropauth/getData',{})
+            axios.get('https://cors-anywhere.herokuapp.com/http://api.dropwallet.io/api/dropauth/getData',{})
             .then((res)=>{
                 setData(res&&res.data)
             })

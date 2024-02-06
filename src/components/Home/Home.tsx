@@ -5,10 +5,14 @@ import axios from "axios";
 export default function Home(){
     const [data, setData] = useState([]);
 
-    axios.get('http://localhost:8080/api/dropauth/getData',{})
-    .then((res)=>{
-        setData(res.data)
-    })
+    axios('https://cors-anywhere.herokuapp.com/http://api.dropwallet.io/api/dropauth/getData', {
+		method: 'get',
+		data: {},
+	}).then((response) => {
+		setData(response.data)
+	}).catch((e) => {
+		console.log(e);
+	});
     const text_truncate = function(str:string, length:number, ending:string) {
         if (length == null) {
           length = 100;
