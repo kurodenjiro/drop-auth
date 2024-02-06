@@ -461,7 +461,7 @@ const hanleSync = async() =>{
                     ipfs_cid: ""
                   },
                   tags: {
-                    dropauth: "",
+                    BlockQuest: "",
                     near: "",
                     wallet: ""
                   }
@@ -481,10 +481,10 @@ const hanleSync = async() =>{
     
 }
   return (
-  <div className='background'>
+  <div className='bg-slate-300'>
   <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
-                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>DropAuth</a>
+                <a className="navbar-brand text-decoration-none fs-4 font-weight-bold text-white" href={window.location.origin+"/"}>BlockQuest</a>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
@@ -507,7 +507,7 @@ const hanleSync = async() =>{
             </div>
             </nav>
 
-<div className="container py-5">
+<div className="container py-5 bg-slate-300">
 
   <div className="row mb-4">
     <div className="col-lg-8 mx-auto text-center">
@@ -531,32 +531,32 @@ const hanleSync = async() =>{
           <div className="tab-content">
             <div id="nav-tab-card" className="tab-pane fade show active">
               {/* <p className="alert alert-success">Some text success or error</p> */}
-              <h3 className='fs-3 text-white'>General Information</h3>
+              <h3 className='fs-3 text-black'>General Information</h3>
               <form className="form mt-2">
                 <div className="form-group mt-2 fs-6">
-                  <label className='text-white'>Name</label>
+                  <label className='text-black'>Name</label>
                   <input onChange={(e)=>setName(e.target.value)} type="text" name="username" placeholder="MyCompany Macbook Air giveaway" required className="form-control"/>
                 </div>
                 <div className="form-group mt-2 fs-6">
-                  <label className='text-white'>Description</label>
+                  <label className='text-black'>Description</label>
                   <input onChange={(e)=>setDescription(e.target.value)} type="text" name="username" placeholder="It's Time to Step into the Open Web with NEAR Protocol" required className="form-control"/>
                 </div>
                 <div className="form-group mt-2 fs-6">
                   <div className='d-flex justify-content-between'>
                    <div>
-                   <label className='text-white'>Start</label>
+                   <label className='text-black'>Start</label>
                     <div className="input-group">
                       <input onChange={(e)=>setStart(e.target.value)} type="date" name="cardNumber" className="form-control" required/>
                     </div>
                    </div>
                     <div>
-                      <label className='text-white'>End</label>
+                      <label className='text-black'>End</label>
                       <div className="input-group">
                         <input onChange={(e)=>setEnd(e.target.value)} type="date" name="cardNumber" className="form-control" required/>
                       </div>
                     </div>
                     <div>
-                    <label className='text-white'>Time Zone</label>
+                    <label className='text-black'>Time Zone</label>
                     <select onChange={(e)=>setTimeZone(e.target.value)} className="form-select mt-2">
                       <option selected>-- Select time zone --</option>
                       <option value="UTC+07">UTC+07:00 (HCM Time)</option>
@@ -567,17 +567,17 @@ const hanleSync = async() =>{
                   </div>
                 </div>
   
-                <label className='mt-3 fs-6 text-white'>Upload cover</label>
+                <label className='mt-3 fs-6 text-black'>Upload cover</label>
                 <div className="form-group mt border">
                   <input type="file" onChange={handleUpdateFile}/>
                 </div>
               </form>
-              <h3 className='mt-3 fs-3 text-white'>Add Mission</h3>
+              <h3 className='mt-3 fs-3 text-black'>Add Mission</h3>
               <div className="form mt-2">
                 <button onClick={()=>{
                   setElemnt(elment=>elment.concat(<div>
                     <div className="form-group mt-2">
-                    <label className='mt-2 text-white fs-6'>Link</label>
+                    <label className='mt-2 text-black fs-6'>Link</label>
                     <input onChange={(e)=>setDefaultLink(e.target.value)} type="text" name="username" placeholder={"https://twitter.com/0_bishi_7/status/1754587117966008752"} required className="form-control"/>
                   </div>
                   <div className="form-group mt-2">
@@ -597,17 +597,17 @@ const hanleSync = async() =>{
                 </button>
                 {elment}
               </div>
-              <h3 className='mt-3 fs-3 text-white'>Prizes</h3>
+              <h3 className='mt-3 fs-3 text-black'>Prizes</h3>
               <form className="form mt-2">
                 <div className="form-group mt-2">
-                  <label className='fs-6 text-white'>Amount</label>
+                  <label className='fs-6 text-black'>Amount</label>
                   <input onChange={(e)=>setAmount(e.target.value)} type="text" placeholder="10 NEAR" required className="form-control"/>
                 </div>
                 <div className="row mt-2 g-2">
-                  <label className='col fs-6 text-white'>Distribute</label>
+                  <label className='col fs-6 text-black'>Distribute</label>
                   <div className="form-check col fs-6">
                     <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault"/>
-                    <label className="form-check-label text-white" htmlFor="flexCheckDefault">
+                    <label className="form-check-label text-black" htmlFor="flexCheckDefault">
                       Random
                     </label>
                   </div>

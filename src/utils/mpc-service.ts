@@ -178,7 +178,7 @@ export const syncProfile = ({
                 ipfs_cid: accountPicProfile
               },
               tags: {
-                dropauth: "",
+                BlockQuest: "",
                 near: "",
                 wallet: ""
               }

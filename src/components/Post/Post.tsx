@@ -47,7 +47,7 @@ export default function Post(){
         <div className="background">
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
-                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>DropAuth</a>
+                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>dropauth</a>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
