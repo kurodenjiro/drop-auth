@@ -89,6 +89,10 @@ app.get("/api/dropauth/getData",async(req,res)=>{
     const data = await Model.find();
     res.json(data)
 })
+app.get("/api/dropauth/getAction",async(req,res)=>{
+    const data = await actionModel.find();
+    res.json(data)
+})
 
 app.post("/api/dropauth/postData",async(req,res,next)=>{
     const data = new Model({
