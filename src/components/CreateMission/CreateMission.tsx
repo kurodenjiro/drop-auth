@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useEffect ,useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { getAuth, signInWithPopup, GoogleAuthProvider,TwitterAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider,TwitterAuthProvider, signOut } from "firebase/auth";
 import { useNavigate, useRoutes, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 import { Button } from '../../lib/Button';
@@ -12,11 +12,6 @@ import { actionCreators } from "@near-js/transactions";
 import { basePath, network, networkId } from '../../utils/config';
 import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
-import { InMemoryKeyStore } from "@near-js/keystores";
-import { JsonRpcProvider } from '@near-js/providers';
-import type { KeyStore } from '@near-js/keystores';
-import { Account } from '@near-js/accounts';
-import { InMemorySigner } from '@near-js/signers';
 import {
   getAddKeyAction, getAddLAKAction , syncProfile
 } from '../../utils/mpc-service';
@@ -241,7 +236,14 @@ function CreateMission() {
   const [timezone, setTimeZone] = useState("");
   const [defaultLink, setDefaultLink] = useState("");
 
-
+  const logout = async () => {
+    await firebaseAuth.signOut();
+    // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+    window.localStorage.removeItem('webauthn_username');
+    window.fastAuthController.clearUser().then(() => {
+    });
+    navigate(0)
+  }
 
 
   useEffect(()=>{
@@ -423,6 +425,7 @@ const signIn = async (authType) => {
     captureException(error);
   }
 }
+
 const hanleSync = async() =>{
   const accessToken = await firebaseAuth.currentUser.getIdToken()
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -498,7 +501,7 @@ const hanleSync = async() =>{
                         </li>
                     </ul>
                     {authenticated ? (
-                      <button className="btn btn-outline-success text-white" >Logout</button>
+                      <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
                     ) :(
                       <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
                     )}
@@ -622,9 +625,15 @@ const hanleSync = async() =>{
         
         : <div>
           <div className="flex items-center justify-center h-screen dark:bg-gray-800">
-              <button onClick={(e)=>signIn("twitter")} className="px-4 py-2 border flex gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150">
-                  <span>Login with Twitter</span>
-              </button>
+          <button onClick={(e)=>signIn("twitter")} className=" px-3 py-2 btn btn-m btn-ms bg-black ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
+                                    <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                                    <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                                    </svg>
+                                    <span className="text-sm text-white">Login Twitter</span>
+                                </button>
           </div>
           <div data-test-id="callback-status-message">{statusMessage}</div>
         </div>
