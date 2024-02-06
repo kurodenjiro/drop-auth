@@ -419,7 +419,7 @@ const hanleSync = async() =>{
                             let isAction = false;
 
                             getAction.data.forEach(action => {
-                                if(link.link == action.link){
+                                if(link.contentId == action.link){
                                     isAction=true
                                 }
                             });
