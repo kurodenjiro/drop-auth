@@ -31,135 +31,127 @@ export const signInWithTwitterPopup = () => signInWithPopup(firebaseAuth, provid
 
 
 const onCreateAccount = async ({
+  oidcKeypair,
+  accessToken,
+  accountId,
+  publicKeyFak,
+  public_key_lak,
+  contract_id,
+  methodNames,
+  success_url,
+  setStatusMessage,
+  email,
+  gateway,
+  navigate
+}) => {
+  const res = await createNEARAccount({
+    accountId,
+    fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
+    limitedAccessKeys: public_key_lak ? [{
+      public_key:   public_key_lak,
+      receiver_id:  contract_id,
+      allowance:    '250000000000000',
+      method_names: methodNames ?? '',
+    }] : [],
+    accessToken,
     oidcKeypair,
-    accessToken,
-    accountId,
-    publicKeyFak,
-    public_key_lak,
-    contract_id,
-    methodNames,
-    success_url,
-    setStatusMessage,
-    email,
+  });
+  console.log("res.type",res)
+  if (res.type === 'err') return;
+
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
+
+  // Add device
+  await window.firestoreController.addDeviceCollection({
+    fakPublicKey: publicKeyFak,
+    lakPublicKey: public_key_lak,
     gateway,
-    navigate
-  }) => {
-    const res = await createNEARAccount({
-      accountId,
-      fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
-      limitedAccessKeys: public_key_lak ? [{
-        public_key:   public_key_lak,
-        receiver_id:  contract_id,
-        allowance:    '250000000000000',
-        method_names: methodNames ?? '',
-      }] : [],
+  });
+
+  setStatusMessage('Account created successfully!');
+
+  // TODO: Check if account ID matches the one from email
+
+  if (publicKeyFak) {
+    window.localStorage.setItem('webauthn_username', email);
+  }
+
+  setStatusMessage('Redirecting to app...');
+
+  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+
+    await onSignIn({
       accessToken,
-      oidcKeypair,
-    });
-    console.log("res.type",res)
-    if (res.type === 'err') return;
-  
-    if (!window.firestoreController) {
-      window.firestoreController = new FirestoreController();
-    }
-  
-    // Add device
-    await window.firestoreController.addDeviceCollection({
-      fakPublicKey: publicKeyFak,
-      lakPublicKey: public_key_lak,
+      publicKeyFak,
+      public_key_lak : recoveryPK,
+      contract_id,
+      methodNames,
+      setStatusMessage,
+      email,
       gateway,
-    });
-  
-    setStatusMessage('Account created successfully!');
-  
-    // TODO: Check if account ID matches the one from email
-  
-    if (publicKeyFak) {
-      window.localStorage.setItem('webauthn_username', email);
-    }
-  
-    setStatusMessage('Redirecting to app...');
-  
-    const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  
-      await onSignIn({
-        accessToken,
-        publicKeyFak,
-        public_key_lak : recoveryPK,
-        contract_id,
-        methodNames,
-        setStatusMessage,
-        email,
-        gateway,
-        navigate,
-        accountId,
-        recoveryPK
-      })
-  };
-  
-  export const onSignIn = async ({
-    accessToken,
-    publicKeyFak,
-    public_key_lak,
-    contract_id,
-    methodNames,
-    setStatusMessage,
-    email,
-    gateway,
-    navigate,
-    accountId,
-    recoveryPK
-  }) => {
-  
-     const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
-     console.log("onlyAddLak",onlyAddLak)
-     const addKeyActions = onlyAddLak
-       ? getAddLAKAction({
-         publicKeyLak: public_key_lak,
-         contractId:   contract_id,
-         methodNames,
-         allowance:    new BN('250000000000000'),
-       }) : getAddKeyAction({
-         publicKeyLak:      public_key_lak,
-         webAuthNPublicKey: publicKeyFak,
-         contractId:        contract_id,
-         methodNames,
-         allowance:         new BN('250000000000000'),
-       });
-  
-     await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-       oidcToken: accessToken,
-       accountId,
-       recoveryPK,
-       actions:   addKeyActions
-     })
-       .then((res) => res.json())
-       .then(async (res) => {
-         const failure = res['Receipts Outcome']
-           .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-         if (failure?.ActionError?.kind?.LackBalanceForState) {
-  
-         } else {
-           await checkFirestoreReady();
-            
-           if (!window.firestoreController) {
-             (window as any).firestoreController = new FirestoreController();
-           }
-           await window.firestoreController.addDeviceCollection({
-             fakPublicKey: onlyAddLak ? null : publicKeyFak,
-             lakPublicKey: public_key_lak,
-             gateway,
-           });
-   
-           setStatusMessage('Account recovered successfully!');
-   
-           if (publicKeyFak) {
-             window.localStorage.setItem('webauthn_username', email);
-           }
-           window.location.reload();
-         }
-       });
-  };
+      navigate,
+      accountId,
+      recoveryPK
+    })
+};
+
+export const onSignIn = async ({
+  accessToken,
+  publicKeyFak,
+  public_key_lak,
+  contract_id,
+  methodNames,
+  setStatusMessage,
+  email,
+  gateway,
+  navigate,
+  accountId,
+  recoveryPK
+}) => {
+
+   const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
+   console.log("onlyAddLak",onlyAddLak)
+   const addKeyActions = onlyAddLak
+     ? getAddLAKAction({
+       publicKeyLak: public_key_lak,
+       contractId:   contract_id,
+       methodNames,
+       allowance:    new BN('250000000000000'),
+     }) : getAddKeyAction({
+       publicKeyLak:      public_key_lak,
+       webAuthNPublicKey: publicKeyFak,
+       contractId:        contract_id,
+       methodNames,
+       allowance:         new BN('250000000000000'),
+     });
+
+   await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+     oidcToken: accessToken,
+     accountId,
+     recoveryPK,
+     actions:   addKeyActions
+   })
+     await checkFirestoreReady();
+          
+     if (!window.firestoreController) {
+       (window as any).firestoreController = new FirestoreController();
+     }
+     await window.firestoreController.addDeviceCollection({
+       fakPublicKey: onlyAddLak ? null : publicKeyFak,
+       lakPublicKey: public_key_lak,
+       gateway,
+     });
+
+     setStatusMessage('Account recovered successfully!');
+
+     if (publicKeyFak) {
+       window.localStorage.setItem('webauthn_username', email);
+     }
+     window.location.reload();
+};
+
   
   
   const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
@@ -219,127 +211,117 @@ export default function Post(){
     const { authenticated } = useAuthState();
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
-    const [checkId, setCheckId] = useState([]);
-    const [title, setTitleLink] = useState("");
-    const [action, setAction] = useState(false);
+    const [userId, setUserId] = useState("");
+    
     const navigate = useNavigate();
 
     const signIn = async (authType) => {
-        try {
-          const {user} = authType == "google" ? await signInWithGooglePopup() : await signInWithTwitterPopup();
-          if (!user || !user.emailVerified) return;
-      
-          const accessToken = await user.getIdToken();
-          
-          const email = user.email;
-          const success_url = window.location.origin;
-      
-          //check accounts
-          let accountId = window.fastAuthController.getAccountId()
-          console.log("accountId",accountId)
-          const methodNames = "set";
-          const contract_id = "v1.social08.testnet"
-          let isRecovery = true;
-      
-          
+      try {
+        const {user} = await signInWithTwitterPopup();
+        console.log("user",user);
+       // if (!user || !user.emailVerified) return;
         
+        const accessToken = await user.getIdToken();
+        setUserId(user.providerData[0].uid)
+        const email = user.providerData[0].uid;
+        const success_url = window.location.origin;
+    
+        //check accounts
+        let accountId = window.fastAuthController.getAccountId()
+        console.log("accountId",accountId)
+        const methodNames = "set";
+        const contract_id = "v1.social08.testnet"
+        let isRecovery = true;
       
-          // claim the oidc token
-          window.fastAuthController = new FastAuthController({
-            accountId,
-            networkId
-          });
-          
-      
-          let publicKeyFak: string;
-          let public_key_lak : string;
-          
-          
-            const keyPair =  KeyPair.fromRandom('ed25519');
-            publicKeyFak = keyPair.getPublicKey().toString();
-            await window.fastAuthController.setKey(keyPair);
-          
-      
-          if (!window.fastAuthController.getAccountId()) {
-            isRecovery = false
-            const isAvailable = await checkIsAccountAvailable(user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-            if(isAvailable){
-              accountId = user.email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-            }else{
-              accountId = user.email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase()) ;
-            }
-            await window.fastAuthController.setAccountId(accountId);
-          }
-      
-          await window.fastAuthController.claimOidcToken(accessToken);
-          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          window.firestoreController = new FirestoreController();
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            oidcToken: accessToken,
-          });
-          // if account in mpc then recovery 
-          // if account not exist then create new account
-          const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-      
-          const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-            .then((res) => res.json())
-            .catch((err) => {
-              console.log(err);
-              captureException(err);
-              throw new Error('Unable to retrieve account Id');
-            });
+    
+        // claim the oidc token
+        window.fastAuthController = new FastAuthController({
+          accountId,
+          networkId
+        });
         
-         
-          if (!accountIds.length) {
-            let accountId : string;
-            const isAvailable = await checkIsAccountAvailable(email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`));
-            if(isAvailable){
-              accountId = email.replace("@gmail.com",`.${network.fastAuth.accountIdSuffix}`)
-            }else{
-              accountId = email.replace("@gmail.com",publicKeyFak.replace("ed25519:","").slice(0,4).toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`) ;
-            }
-            await window.fastAuthController.setAccountId(accountId);
-            await onCreateAccount(
-              {
-                oidcKeypair,
-                accessToken,
-                accountId,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                success_url,
-                setStatusMessage,
-                email,
-                gateway:success_url,
-                navigate
-              }
-            )
-          }else{
-            setStatusMessage("logging...")
-            await onSignIn(
-              {
-                accessToken,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                setStatusMessage,
-                email,
-                navigate,
-                gateway:success_url,
-                accountId:accountIds[0],
-                recoveryPK
-              }
-            )
-          }
-      
-        } catch (error) {
-          console.log('error', error);
-          captureException(error);
+    
+        let publicKeyFak: string;
+        let public_key_lak : string;
+        
+        
+          const keyPair =  KeyPair.fromRandom('ed25519');
+          publicKeyFak = keyPair.getPublicKey().toString();
+          await window.fastAuthController.setKey(keyPair);
+        
+    
+        if (!window.fastAuthController.getAccountId()) {
+          isRecovery = false
+          accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
+          await window.fastAuthController.setAccountId(accountId);
         }
+    
+        await window.fastAuthController.claimOidcToken(accessToken);
+        const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+        window.firestoreController = new FirestoreController();
+        window.firestoreController.updateUser({
+          userUid:   user.uid,
+          oidcToken: accessToken,
+        });
+        // if account in mpc then recovery 
+        // if account not exist then create new account
+        const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+    
+        const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+          .then((res) => res.json())
+          .catch((err) => {
+            console.log(err);
+            captureException(err);
+            throw new Error('Unable to retrieve account Id');
+          });
+      
+       
+        if (!accountIds.length) {
+          let accountId : string;
+    
+          accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
+          await window.fastAuthController.setAccountId(accountId);
+          await onCreateAccount(
+            {
+              oidcKeypair,
+              accessToken,
+              accountId,
+              publicKeyFak,
+              public_key_lak,
+              contract_id,
+              methodNames,
+              success_url,
+              setStatusMessage,
+              email,
+              gateway:success_url,
+              navigate
+            }
+          )
+        }else{
+          setStatusMessage("logging...")
+          await onSignIn(
+            {
+              accessToken,
+              publicKeyFak,
+              public_key_lak,
+              contract_id,
+              methodNames,
+              setStatusMessage,
+              email,
+              navigate,
+              gateway:success_url,
+              accountId:accountIds[0],
+              recoveryPK
+            }
+          )
+        }
+    
+      } catch (error) {
+        console.log('error', error);
+        captureException(error);
       }
+    }
+      
       const checkTweetAction = async(link:any,action:any,userId:any,postId:any) =>{
           //checkTweetAction(lk.link,true,"huunhan",lk.id)
         window.open(`${link}`,'popup','width=900,height=900')
@@ -392,8 +374,8 @@ export default function Post(){
                   metadata: {
                     title: "title",
                     description: "description",
-                    media: `https://byzantion.mypinata.cloud/ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
-                    reference: `ipfs/bafkreiak7jzkpmrv365dskqk4thmlki3ts7kzq44hqr62dmrimbn47676e`,
+                    media: `https://byzantion.mypinata.cloud/ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z/0421.png`,
+                    reference: `ipfs/QmabYudwPtdSy1JnvnVMfuiu9pNfGnxMhN2obbPmSDx65Z`,
                   },
                   receiver_id: accountIds[0]
                 }
@@ -402,187 +384,180 @@ export default function Post(){
             new BN(deposit))
             ]
         })
-          .then((res) => res.json())
-          .then(async (res) => {
-            setStatusMessage('done');
-          })
+         alert("claim successful")
           
       }
-    const logout = async () => {
-        await firebaseAuth.signOut();
-        // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-        window.localStorage.removeItem('webauthn_username');
-        window.fastAuthController.clearUser().then(() => {
-        });
-        navigate(0)
-      }
-
-    useEffect(()=>{
-        const getData = ()=>{
-            axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
-            .then(async(res)=>{
-                setData(res&&res.data.data)
-                
-            const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
-            let action = [];
-            if(res.data.data){
-               Object.values(res.data.data).map((dt:any)=>{
-                //console.log(dt)
-                    if(dt!=undefined && dt._id==mission_id){
-                        setName(dt.name);
-                        setBackgroundCover(dt.backgroundCover);
-                        setDescription(dt.description); 
-                        setAmount(dt.amount);
-                        setLink(dt.link)
-                        setStart(dt.start);
-                        setEnd(dt.end);
-                        setLoading(true);
-                        (dt.link).forEach((link:any)=>{
-                          let isAction = false;
-                          (getAction.data).forEach(action => {
-                              if(link.id == action.postId){
-                                  isAction=true
-                              }
-                              //console.log(action)
-                          });
-                          action.push({
-                              link:link.link,
-                              title:link.title,
-                              disable:isAction,
-                              id: link.id,
-                          })
-                          setLink(action);
-                      })
-                      
-                    }
-                })
+          const logout = async () => {
+              await firebaseAuth.signOut();
+              // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+              window.localStorage.removeItem('webauthn_username');
+              window.fastAuthController.clearUser().then(() => {
+              });
+              navigate(0)
             }
-            })
-        }
-        getData();
-
-        
-    },[])
-    
-    //console.log("link",link)
-    //console.log(searchParams.get("mission_id"));
-    return(
-        <div className="background " style={{height:"100%"}}>
-            <nav className="navbar navbar-expand-lg bg-body-tertiary">
-            <div className="container-fluid nav-format">
-                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="collapse navbar-collapse  nav-format" id="navbarSupportedContent">
-                    <ul className="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none ">
-                        <li className="nav-item">
-                        <a className="nav-link active text-white text-decoration-none fs-6" href="/">Home</a>
-                        </li>
-                        <li className="nav-item text-decoration-none">
-                        <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
-                        </li>
-                    </ul>
-                    {authenticated ? (
-                      <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
-                    ) :(
-                      <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
-                    )}
-                </div>
-            </div>
-            </nav>
-            {loading ? (
-            <div className="container py-5 container-format">
-            <div className="row mb-4 ">
-                <div className="col-lg-7 mx-auto d-flex flex-column">
-                <img className="object-contain " width={"500px"} src={backgroundCover}/>
-                    <label className="title">{name}</label>
-                    <span className="desc">{description}</span>
-                    <span className="time text-white">{start} - {end} 12:00 GMT+07:00 </span>
-                    <span className="text-white fs-6 mt-3">Prizes: {amount} NEAR</span>
-                </div>
-            </div>
-            {authenticated && (
-            <div className="row mt-2">
-            <div className="col-lg-7 mx-auto">
-                <div>
-                    <h3 className="fs-4 text-white">Login Twitter</h3>
-                    <div className="px-3 py-2">
+      
+          useEffect(()=>{
+              const getData = async()=>{
+                  const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
+                  const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
+                  
+                  if(getData.data.data){
+                      Object.values(getData.data.data).map((dt:any)=>{
+                          if(dt!=undefined && dt._id==mission_id){
+                              setName(dt.name);
+                              setBackgroundCover(dt.backgroundCover);
+                              setDescription(dt.description);
+                              setLink(dt.link);
+                              setAmount(dt.amount);
+                              setStart(dt.start);
+                              setEnd(dt.end);
+                              setLoading(true);
+                              let action = [];
+                              (dt.link).map((link)=>{
+                                  
+                                  let isAction = false;
+      
+                                  (getAction.data).forEach(action => {
+                                      if(link._id == action.id){
+                                          isAction=true
+                                      }
+                                  });
+                                  action.push({
+                                      link:link.link,
+                                      title:link.title,
+                                      disable:isAction,
+                                      id: link._id
+                                  })
+                                  
+                              })
+                              setLink(action);
+                          }
+                      })
+                  }
+              }
+              getData()
+              
+          },[])
+          //console.log(name)
+          //console.log(searchParams.get("mission_id"));
+          return(
+              <div className="background " style={{height:"100%"}}>
+                  <nav className="navbar navbar-expand-lg bg-body-tertiary">
+                  <div className="container-fluid nav-format">
+                      <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
+                      <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                      <span className="navbar-toggler-icon"></span>
+                      </button>
+                      <div className="collapse navbar-collapse  nav-format" id="navbarSupportedContent">
+                          <ul className="navbar-nav me-auto mb-2 mb-lg-0 text-decoration-none ">
+                              <li className="nav-item">
+                              <a className="nav-link active text-white text-decoration-none fs-6" href="/">Home</a>
+                              </li>
+                              <li className="nav-item text-decoration-none">
+                              <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
+                              </li>
+                          </ul>
+                          {authenticated ? (
+                            <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
+                          ) :(
+                            <button className="btn text-white" onClick={(e)=>signIn("twitter")} >Login Twitter</button>
+                          )}
+                      </div>
+                  </div>
+                  </nav>
+                  {loading ? (
+                  <div className="container py-5 container-format">
+                  <div className="row mb-4 ">
+                      <div className="col-lg-7 mx-auto d-flex flex-column">
+                      <img className="object-contain " width={"500px"} src={backgroundCover}/>
+                          <label className="title">{name}</label>
+                          <span className="desc">{description}</span>
+                          <span className="time text-white">{start} - {end} 12:00 GMT+07:00 </span>
+                          <span className="text-white fs-6 mt-3">Prizes: {amount} NEAR</span>
+                      </div>
+                  </div>
+                  {authenticated && (
+                  <div className="row mt-2">
+                  <div className="col-lg-7 mx-auto">
+                      <div>
+                          <h3 className="fs-4 text-white">Login Twitter</h3>
+                          <div className="px-3 py-2">
+                          <button onClick={(e)=>signIn("twitter")} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
+                                      <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                                      </svg>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                                      <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                                      </svg>
+                                      <span className="text-sm text-white">Login</span>
+                                  </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+      
+                  )}
+      
+                  <div className="row mt-2">
+                      <div className="col-lg-7 mx-auto">
+                          <div>
+                              <h3 className="fs-4 text-white">Mission</h3>
+                              <div className="px-3 py-2">
+                                  {link.map((lk,i)=>(
+                                      <button   onClick={()=>checkTweetAction(lk.link,true,"huunhan",lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
+                                          <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                                          </svg>
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                                          <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                                          </svg>
+                                          <span className="text-sm text-white">{lk.title}</span>
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="row mt-2">
+                      <div className="col-lg-7 mx-auto">
+                          <div>
+                              <h3 className="fs-4 text-white">Claim Reward</h3>
+                              <div className="px-3 py-2">
+                              {authenticated ? (
+        <button onClick={hanleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
+        <h3 className="text-sm text-white">Claim</h3>
+      </button>
+      
+                  ):(
                     <button onClick={(e)=>signIn("twitter")} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
-                                <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
-                                </svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
-                                <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
-                                </svg>
-                                <span className="text-sm text-white">Login</span>
-                            </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-            )}
-
-            <div className="row mt-2">
-                <div className="col-lg-7 mx-auto">
-                    <div>
-                        <h3 className="fs-4 text-white">Mission</h3>
-                        <div className="px-3 py-2">
-                            {/* <button className="bg-transparent text-decoration-none">
-                                {link.map((lk:any)=>(
-                                   <div className="px-3 py-2 btn btn-m btn-ms ">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
-                                   <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
-                                   </svg>
-                                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
-                                   <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
-                                   </svg>
-                                   <span className="text-sm text-white">{title}</span>
-                                   </div>
-                                ))}
-                              </button> */}
-                            {link.map((lk,i)=>(
-                             <button disabled={lk.action} onClick={()=>checkTweetAction(lk.link,true,"huunhan",lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
-                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
-                             <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
-                             </svg>
-                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
-                             <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
-                             </svg>
-                             <span className="text-sm text-white">{lk.title}</span>
-                            </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="row mt-2">
-                <div className="col-lg-7 mx-auto">
-                    <div>
-                        <h3 className="fs-4 text-white">Claim Reward</h3>
-                        <div className="px-3 py-2">
-                        <button onClick={hanleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
-                                    <h3 className="text-sm text-white">Claim</h3>
-                                </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-            ):(
-                <div className="container py-5 container-format">
-                    <div className="row mt-2">
-                <div className="col-lg-7 mx-auto">
-                    <h3 className="text-white" >Loading</h3>
-                </div>
-                </div>
-
-                </div>
-
-            )}
-
-
-        </div>
-    )
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
+                    <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" x="0px" y="0px"  viewBox="0 0 48 48">
+                    <path fill="#03A9F4" d="M42,12.429c-1.323,0.586-2.746,0.977-4.247,1.162c1.526-0.906,2.7-2.351,3.251-4.058c-1.428,0.837-3.01,1.452-4.693,1.776C34.967,9.884,33.05,9,30.926,9c-4.08,0-7.387,3.278-7.387,7.32c0,0.572,0.067,1.129,0.193,1.67c-6.138-0.308-11.582-3.226-15.224-7.654c-0.64,1.082-1,2.349-1,3.686c0,2.541,1.301,4.778,3.285,6.096c-1.211-0.037-2.351-0.374-3.349-0.914c0,0.022,0,0.055,0,0.086c0,3.551,2.547,6.508,5.923,7.181c-0.617,0.169-1.269,0.263-1.941,0.263c-0.477,0-0.942-0.054-1.392-0.135c0.94,2.902,3.667,5.023,6.898,5.086c-2.528,1.96-5.712,3.134-9.174,3.134c-0.598,0-1.183-0.034-1.761-0.104C9.268,36.786,13.152,38,17.321,38c13.585,0,21.017-11.156,21.017-20.834c0-0.317-0.01-0.633-0.025-0.945C39.763,15.197,41.013,13.905,42,12.429"></path>
+                    </svg>
+                    <span className="text-sm text-white">Login</span>
+                </button>
+                  )}
+                            
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+                  ):(
+                      <div className="container py-5 container-format">
+                          <div className="row mt-2">
+                      <div className="col-lg-7 mx-auto">
+                          <h3 className="text-white" >Loading</h3>
+                      </div>
+                      </div>
+      
+                      </div>
+      
+                  )}
+      
+      
+              </div>
+          )
 }
