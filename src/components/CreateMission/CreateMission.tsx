@@ -545,7 +545,7 @@ const hanleSync = async() =>{
 
   <div className="row">
     <div className="col-lg-7 mx-auto">
-    {!authenticated ? 
+    {authenticated ? 
         (
           <div className="form-format rounded-lg shadow-sm p-5">
             
