@@ -317,6 +317,7 @@ const signIn = async (authType) => {
     
     const accessToken = await user.getIdToken();
     setUserId(user.providerData[0].uid)
+    window.localStorage.setItem("twitter-uid",user.providerData[0].uid)
     const email = user.providerData[0].uid;
     const success_url = window.location.origin;
 

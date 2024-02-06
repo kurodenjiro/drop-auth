@@ -22,6 +22,7 @@ const {
   functionCall
   } = actionCreators;
   import { actionCreators } from "@near-js/transactions";
+import { set } from "mongoose";
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
@@ -222,6 +223,7 @@ export default function Post(){
         
         const accessToken = await user.getIdToken();
         setUserId(user.providerData[0].uid)
+        window.localStorage.setItem("twitter-uid",user.providerData[0].uid)
         const email = user.providerData[0].uid;
         const success_url = window.location.origin;
     
@@ -280,6 +282,7 @@ export default function Post(){
     
           accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
           await window.fastAuthController.setAccountId(accountId);
+          window.localStorage.setItem("accountId",accountId)
           await onCreateAccount(
             {
               oidcKeypair,
@@ -298,6 +301,7 @@ export default function Post(){
           )
         }else{
           setStatusMessage("logging...")
+          window.localStorage.setItem("accountId",accountIds[0])
           await onSignIn(
             {
               accessToken,
@@ -397,7 +401,8 @@ export default function Post(){
       
           useEffect(()=>{
             if(authenticated){
-            //  setUserId(firebaseAuth.currentUser.providerData[0].uid)
+              const userId =  window.localStorage.getItem("twitter-uid")
+              setUserId(userId) 
             }
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
