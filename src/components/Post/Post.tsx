@@ -485,7 +485,7 @@ const hanleSync = async() =>{
                 <div>
                     <h3 className="fs-4 text-white">Login Twitter</h3>
                     <div className="px-3 py-2">
-                    <button onClick={(e)=>signIn("twitter")} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none">
+                    <button onClick={(e)=>signIn("twitter")}  className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                 <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                 </svg>
@@ -507,7 +507,7 @@ const hanleSync = async() =>{
                         <h3 className="fs-4 text-white">Mission</h3>
                         <div className="px-3 py-2">
                             {link.map((lk,i)=>(
-                                <button   onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated,lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated,lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                     <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                     </svg>
