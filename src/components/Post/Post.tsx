@@ -217,7 +217,9 @@ export default function Post(){
     const { authenticated } = useAuthState();
     const mission_id = searchParams.get("mission_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
-    
+    const [checkId, setCheckId] = useState<any>("");
+
+
     const navigate = useNavigate();
 
     const signIn = async (authType) => {
@@ -336,7 +338,30 @@ export default function Post(){
           captureException(error);
         }
       }
-      
+      const checkTweetAction = async(link:any,action:any,userId:any,postId:any) =>{
+        setCheckId(action);
+        window.open(`${link}`,'popup','width=900,height=900')
+        const  runCheck = async() => {
+            axios('https://blockquest-api.vercel.app/api/dropauth/postAction', {
+              method:"POST",
+                data:{
+                  contentId:link,
+                  postId:postId,
+                  action:action,
+                  userCreated:userId,
+                }
+              } )
+              .then(function (response) {
+                console.log(response);
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+        }
+        runCheck()
+        setTimeout(runCheck, 5000)
+      }
+
 const hanleSync = async() =>{
   const accessToken = await firebaseAuth.currentUser.getIdToken()
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -405,7 +430,7 @@ const hanleSync = async() =>{
 
     useEffect(()=>{
         const getData = ()=>{
-            axios.get('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth',{})
+            axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
             .then((res)=>{
                 setData(res&&res.data.data)
                 console.log(res.data)
@@ -496,7 +521,7 @@ const hanleSync = async() =>{
                         <h3 className="fs-4 text-white">Mission</h3>
                         <div className="px-3 py-2">
                             {link.map((lk,i)=>(
-                                <button  disabled={authenticated ? true : false} onClick={()=>window.open(`${lk.link}`,'popup','width=600,height=600')} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                <button  onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated,lk._id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                     <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                     </svg>
