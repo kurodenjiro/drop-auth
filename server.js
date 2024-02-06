@@ -67,6 +67,10 @@ const actionSchema = new mongoose.Schema({
         required: true,
         type: String
     },
+    postId:{
+        required: true,
+        type: String
+    },
 })
 const Model = mongoose.model('Data', dataSchema)
 const actionModel = mongoose.model('actionData', actionSchema)
@@ -112,6 +116,7 @@ app.post("/api/dropauth/postData",async(req,res,next)=>{
 app.post("/api/dropauth/postAction",async(req,res,next)=>{
     const data = new actionModel({
         contentId:req.body.id,
+        postId:req.body.postId,
         action:req.body.action,
         userCreated:req.body.userCreated,
     }) 
