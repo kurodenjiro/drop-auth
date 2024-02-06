@@ -429,19 +429,13 @@ const hanleSync = async() =>{
       }
 
     useEffect(()=>{
-        const getData = ()=>{
-            axios.get('http://localhost:8080/api/dropauth/getData',{})
-            .then((res)=>{
-                setData(res&&res.data)
-            })
-        }
-        getData();
-        const getDataDetail = () =>{
-            if(data){
-                data.map((dt)=>{
-                    //setDataDetail(dt)
+        const getData = async()=>{
+            const getData = await axios.get('http://localhost:8080/api/dropauth/getData')
+            const getAction = await axios.get('http://localhost:8080/api/dropauth/getAction')
+            let action = [];
+            if(getData.data){
+                getData.data.map((dt)=>{
                     if(dt!=undefined && dt._id==mission_id){
-                        // setDataDetail(dt.)
                         setName(dt.name);
                         setBackgroundCover(dt.backgroundCover);
                         setDescription(dt.description);
@@ -450,11 +444,27 @@ const hanleSync = async() =>{
                         setStart(dt.start);
                         setEnd(dt.end);
                         setLoading(true);
+                        dt.link.map((link)=>{
+                            let isAction = false;
+                            getAction.data.forEach(action => {
+                                if(link.id == action.id){
+                                    isAction=true
+                                }
+                            });
+                            action.push({
+                                link:link.link,
+                                title:link.title,
+                                disable:isAction
+                            })
+                            setLink(action);
+                        })
                     }
                 })
+                link.forEach(element => {
+                    
+                });
             }
         }
-        getDataDetail()
         
     },[data])
     //console.log(name)
