@@ -27,7 +27,7 @@ export default function Home(){
         <div className="background">
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
-                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Campaign Craft</a>
+                <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
@@ -46,7 +46,7 @@ export default function Home(){
             </nav>
             <div className="container py-5">
                 <div className="mb-3">
-                    <h3 className="text-white fs-3">Mission Web3</h3>
+                    <h3 className="text-white fs-3 text-center">Campain</h3>
                 </div>
                 <div className="project-show ">
                     {data&&data.map((dt,i)=>(
