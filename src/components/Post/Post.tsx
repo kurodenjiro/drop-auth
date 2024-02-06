@@ -343,20 +343,21 @@ export default function Post(){
       const checkTweetAction = async(link:any,action:any,userId:any,postId:any) =>{
           //checkTweetAction(lk.link,true,"huunhan",lk.id)
         window.open(`${link}`,'popup','width=900,height=900')
-        let data = {
+        let data = JSON.stringify({
           contentId: link,
           postId: Number(postId),
           action: action,
           userCreated: userId
-        };
+        });
         console.log("data",data)
-        await axios('https://blockquest-api.vercel.app/api/dropauth/postAction',{method:"POST",data:data})
-        .then((res)=>{
-          console.log(res,"res")
-        })
-        
-
-        
+        var requestOptions = {
+          method: 'POST',
+          body: data,
+        };
+        fetch("https://blockquest-api.vercel.app/api/dropauth/postAction", requestOptions)
+          .then(response => response.text())
+          .then(result => console.log(result))
+          .catch(error => console.log('error', error));
       }
 
       const hanleSync = async() =>{
@@ -461,9 +462,9 @@ export default function Post(){
         getData();
 
         
-    },[data,link])
+    },[])
     
-    console.log("link",link)
+    //console.log("link",link)
     //console.log(searchParams.get("mission_id"));
     return(
         <div className="background " style={{height:"100%"}}>
