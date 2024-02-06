@@ -300,10 +300,8 @@ function CreateMission() {
         userCreated:userId
       })
     })
-    if(res.ok){
-      setLoading(true)
-    }
-  
+    console.log("res",res.json())
+    alert("Create Mission Successfull!")
   }
   const handleSelect= (e:any) =>{
     setSelect(e.target.value)
@@ -497,18 +495,6 @@ const hanleSync = async() =>{
 }
   return (
   <div className='bg-slate-300'>
-      {loading&&<div className="loading">
-        <div className='format-loading'>
-        <CircleLoader
-                color={"#000000"}
-                loading={loading}
-                cssOverride={override}
-                size={200}
-                aria-label="Loading Spinner"
-                data-testid="loader"
-                    />
-        </div>    
-      </div>}
   <nav className="navbar navbar-expand-lg bg-body-tertiary">
 
             <div className="container-fluid nav-format">
