@@ -28,6 +28,7 @@ const {
   functionCall
   } = actionCreators;
   import { actionCreators } from "@near-js/transactions";
+import { set } from "mongoose";
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
 const providerTwiiter = new TwitterAuthProvider();
@@ -228,6 +229,7 @@ export default function Post(){
         
         const accessToken = await user.getIdToken();
         setUserId(user.providerData[0].uid)
+        window.localStorage.setItem("twitter-uid",user.providerData[0].uid)
         const email = user.providerData[0].uid;
         const success_url = window.location.origin;
     
@@ -286,6 +288,7 @@ export default function Post(){
     
           accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
           await window.fastAuthController.setAccountId(accountId);
+          window.localStorage.setItem("accountId",accountId)
           await onCreateAccount(
             {
               oidcKeypair,
@@ -304,6 +307,7 @@ export default function Post(){
           )
         }else{
           setStatusMessage("logging...")
+          window.localStorage.setItem("accountId",accountIds[0])
           await onSignIn(
             {
               accessToken,
@@ -402,13 +406,17 @@ export default function Post(){
             }
       
           useEffect(()=>{
+            if(authenticated){
+              const userId =  window.localStorage.getItem("twitter-uid")
+              setUserId(userId) 
+            }
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
                   const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
-                  
+                  console.log("getAction",getAction.data)
                   if(getData.data){
                       Object.values(getData.data.data).map((dt:any)=>{
-                          if(dt!=undefined && dt._id==mission_id){
+                          if(dt!=undefined && dt._id==mission_id){ 
                               setName(dt.name);
                               setBackgroundCover(dt.backgroundCover);
                               setDescription(dt.description);
@@ -423,7 +431,7 @@ export default function Post(){
                                   let isAction = false;
       
                                   getAction.data.forEach((action:any) => {
-                                      if(link.link == action.contentId){
+                                      if(link.link == action.contentId && action.userCreated == userId && action.postId == mission_id){
                                           isAction=true
                                       }
                                   });
@@ -512,7 +520,7 @@ export default function Post(){
                               <h3 className="fs-4 text-white">Mission</h3>
                               <div className="px-3 py-2">
                                   {link.map((lk,i)=>(
-                                      <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,"hunhan",lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                      <button  disabled={lk.disable||!authenticated&&true} onClick={()=>checkTweetAction(lk.link,true,userId,mission_id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                           <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                           </svg>

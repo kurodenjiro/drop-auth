@@ -212,3 +212,14 @@ html {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+.login{
+  display: flex;
+  gap: 24px;
+}
+.accountid{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}

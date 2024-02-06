@@ -236,7 +236,8 @@ function CreateMission() {
   const [select, setSelect] = useState("");
   const [timezone, setTimeZone] = useState("");
   const [defaultLink, setDefaultLink] = useState("");
-  const [loading,setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [accountId, setAccountId] = useState("")
 
   const logout = async () => {
     await firebaseAuth.signOut();
@@ -249,7 +250,11 @@ function CreateMission() {
 
 
   useEffect(()=>{
-
+    if(authenticated){
+      const accountId = window.localStorage.getItem("accountId")
+      console.log("accountId",accountId)
+      setAccountId(accountId)
+    }
     if(select=="like"){
       //https://twitter.com/0_bishi_7/status/1754587117966008752
       let tweet_id = defaultLink.split("/")[5]
@@ -325,6 +330,7 @@ const signIn = async (authType) => {
 
     const accessToken = await user.getIdToken();
     setUserId(user.providerData[0].uid)
+    window.localStorage.setItem("twitter-uid",user.providerData[0].uid)
     const email = user.providerData[0].uid;
     const success_url = window.location.origin;
 
@@ -383,6 +389,9 @@ const signIn = async (authType) => {
 
       accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
+      setAccountId(accountId)
+      
+      window.localStorage.setItem("accountId",accountId)
       await onCreateAccount(
         {
           oidcKeypair,
@@ -401,6 +410,8 @@ const signIn = async (authType) => {
       )
     }else{
       setStatusMessage("logging...")
+      window.localStorage.setItem("accountId",accountIds[0])
+      setAccountId(accountIds[0])
       await onSignIn(
         {
           accessToken,
@@ -514,7 +525,11 @@ const hanleSync = async() =>{
                         </li>
                     </ul>
                     {authenticated ? (
-                      <button className="btn btn-outline-success text-white" onClick={logout}>Logout</button>
+                      <div className='login'>
+                        <span className="text-white accountid">huunhanz.near</span>
+                        <button className="btn btn-outline-success text-white" onClick={logout} >Logout</button>
+                      </div>
+                      
                     ) :(
                       <button className="btn btn-outline-success text-white" onClick={(e)=>signIn("twitter")} >Login</button>
                     )}
