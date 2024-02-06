@@ -340,50 +340,25 @@ export default function Post(){
       }
 
       
-      const checkTweetAction = async(link,action,userId) =>{
+      const checkTweetAction = async(link,action,userId,postId) =>{
 
         window.open(`${link}`,'popup','width=900,height=900')
-        //https://twitter.com/intent/like?tweet_id=1754587117966008752
-        console.log(link)
         const  runCheck = async() => {
-            // consumer_key: '55dz7gtANIpYC0188vyBvdL16',
-            // consumer_secret: '2085MSNLYKF58KkaGo2f0loD3HgnnRE3yd3ed4wGi8TjXeLodC',
-            // access_token: '1101778597335916544-XOTpd8kPEMIlAmVdqqb027uBEaBM7S',
-            // access_token_secret: 'Eb0koikOgt9VzJaW6nEEnLPpLTsdE7AVoj89OjbGm5kZm',
-            const consumerKey = 'cFNlTnN1QUh6VFN3YnV4Q2NNQmI6MTpjaQ';
-const consumerSecret = 'tXtNqgkAAt6nBH3JE95EUEeSNgidr3bIUL0iOKzB1E-ncuIflp';
-const accessToken = '1101778597335916544-XOTpd8kPEMIlAmVdqqb027uBEaBM7S';
-const accessTokenSecret = 'Eb0koikOgt9VzJaW6nEEnLPpLTsdE7AVoj89OjbGm5kZm';
-const targetUser = 'target_user'; // Replace with the target user's screen name
-
-// Encode consumer key and secret for Basic Authentication
-const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-const tweetId = link.match(/(\d+)/)[0]; // Replace with the actual tweet ID
-
-axios.get(`https://cors-anywhere.herokuapp.com/https://api.twitter.com/2/tweets/${tweetId}/liking_users`, {
-    headers: {
-      'Authorization': `Bearer AAAAAAAAAAAAAAAAAAAAAKYEsQEAAAAA7eSzZ%2Bcufs0%2FTi6R7V8AgdICeO0%3D5DzF7AgXayq5M0cpve8JumNQaIyEr6kAGDVyxjhjRVStn7Dvk7AAAAAAAAAAAAAAAAAAAAAKYEsQEAAAAA7eSzZ%2Bcufs0%2FTi6R7V8AgdICeO0%3D5DzF7AgXayq5M0cpve8JumNQaIyEr6kAGDVyxjhjRVStn7Dvk7`,
-    },
-  })
-    .then(response => {
-      const likedByUser = response.data.data.some(user => user.username === targetUser);
-
-      if (likedByUser) {
-        console.log(`User @${targetUser} has liked the tweet.`);
-      } else {
-        console.log(`User @${targetUser} has not liked the tweet.`);
-      }
-    })
-    .catch(error => {
-      console.error('Error getting liking users:', error.response.data);
-    });
-
-
-            
-            
+            axios.post('http://localhost:8080/api/dropauth/postData', {
+                contentId:link,
+                postId:postId,
+                action:action,
+                userCreated:userId,
+              } )
+              .then(function (response) {
+                console.log(response);
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
         }
         runCheck()
-        //setTimeout(runCheck, 500)
+        setTimeout(runCheck, 5000)
 
 
       }
@@ -468,7 +443,6 @@ const hanleSync = async() =>{
                     //setDataDetail(dt)
                     if(dt!=undefined && dt._id==mission_id){
                         // setDataDetail(dt.)
-                       
                         setName(dt.name);
                         setBackgroundCover(dt.backgroundCover);
                         setDescription(dt.description);
@@ -550,7 +524,7 @@ const hanleSync = async() =>{
                         <h3 className="fs-4 text-white">Mission</h3>
                         <div className="px-3 py-2">
                             {link.map((lk,i)=>(
-                                <button   onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                <button   onClick={()=>checkTweetAction(lk.link,lk.action,lk.userCreated,link.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                     <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                     </svg>
