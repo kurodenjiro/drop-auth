@@ -6,7 +6,7 @@
   "scripts": {
     "a": "concurrently --kill-others \"nodemon server.js\" \"webpack serve --mode development --history-api-fallback\"",
     "start": "webpack serve --mode development --history-api-fallback",
-    "bundle": "webpack build --mode production",
+    "bundle": "webpack build --mode production ",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
