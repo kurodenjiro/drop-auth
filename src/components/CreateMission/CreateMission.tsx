@@ -526,9 +526,10 @@ const hanleSync = async() =>{
                     </ul>
                     {authenticated ? (
                       <div className='login'>
-                        <span className="text-white accountid">huunhanz.near</span>
-                        <button className="btn btn-outline-success text-white" onClick={logout} >Logout</button>
-                      </div>
+                           <span className="text-white accountid">Wallet: {accountId}</span>
+                           <span className="text-white accountid">Twitter: {userId}</span>
+                           <button className="btn btn-outline-success text-white" onClick={logout} >Logout</button>
+                       </div>
                       
                     ) :(
                       <button className="btn btn-outline-success text-white" onClick={(e)=>signIn("twitter")} >Login</button>

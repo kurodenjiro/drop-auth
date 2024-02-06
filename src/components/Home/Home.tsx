@@ -1,18 +1,17 @@
 import React,{useEffect, useState, CSSProperties} from "react";
 import axios from "axios";
 import CircleLoader from "react-spinners/CircleLoader"
-
+import { useAuthState } from '../../lib/useAuthState';
 const override: CSSProperties = {
   display: "block",
   margin: "0 auto",
   borderColor: "red",
+  border: "2px soild #ffffff"
 }
 
 export default function Home(){
     const [data, setData] = useState([]);
-    let [loading, setLoading] = useState(true);
-    
-
+    const { authenticated } = useAuthState();
     useEffect(()=>{
         axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
             .then((res)=>{
@@ -52,7 +51,13 @@ export default function Home(){
                         <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
                         </li>
                     </ul>
-                    <button className="btn btn-outline-success text-white" type="submit">Login</button>
+                    {authenticated && (
+                     <div className='login'>
+                           <span className="text-white accountid">Wallet: {window.localStorage.getItem("accountId")}</span>
+                           <span className="text-white accountid">Twitter: {window.localStorage.getItem("twitter-uid")}</span>
+                    </div>
+                    )}
+
                 </div>
             </div>
             </nav>
@@ -64,7 +69,7 @@ export default function Home(){
                     {data.length==0?(<div className="format-loading">
                         <CircleLoader
                 color={"#ffffff"}
-                loading={loading}
+                loading={true}
                 cssOverride={override}
                 size={200}
                 aria-label="Loading Spinner"
