@@ -269,18 +269,21 @@ function CreateMission() {
 
 
   const handleInsertData = () =>{
-    axios.post('https://cors-anywhere.herokuapp.com/https://blockquest-api.vercel.app/api/dropauth', {
-      name: name,
-      description: description,
-      start: start,
-      end: end,
-      backgroundCover: image,
-      link: link,
-      action:action,
-      timezone: timezone,
-      amount: amount,
-      perform:false,
-      userCreated:userId
+    axios('https://blockquest-api.vercel.app/api/dropauth', {
+      method:"POST",
+      data:{
+        name: name,
+        description: description,
+        start: start,
+        end: end,
+        backgroundCover: image,
+        link: link,
+        action:action,
+        timezone: timezone,
+        amount: amount,
+        perform:false,
+        userCreated:userId
+      }
     } )
     .then(function (response) {
       console.log(response);
