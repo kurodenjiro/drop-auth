@@ -409,14 +409,14 @@ export default function Post(){
             }
       
           useEffect(()=>{
-            let userId=""
-            if(authenticated){
-              userId =  window.localStorage.getItem("twitter-uid")
-              setUserId(userId) 
-              const accountId =  window.localStorage.getItem("accountId")
-              setAccountId(accountId)
-            }
               const getData = async()=>{
+                let userId=""
+                if(authenticated){
+                  userId =  window.localStorage.getItem("twitter-uid")
+                  setUserId(userId) 
+                  const accountId =  window.localStorage.getItem("accountId")
+                  setAccountId(accountId)
+                }
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
                   const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
                   console.log("getAction",postId,userId)
@@ -481,7 +481,7 @@ export default function Post(){
                           </ul>
                           {authenticated ? (
                             <div className='login'>
-                              <span className="text-white accountid">Wallet: {accountId}</span>
+                              <a  href={`https://testnet.nearblocks.io/address/${accountId}`} target="_blank" className="text-white accountid">Wallet: {accountId}</a>
                               <span className="text-white accountid">Twitter: {userId}</span>
                               <button className="btn btn-outline-success text-white" onClick={logout} >Logout</button>
                             </div>

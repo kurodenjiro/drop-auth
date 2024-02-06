@@ -53,8 +53,8 @@ export default function Home(){
                     </ul>
                     {authenticated && (
                      <div className='login'>
-                           <span className="text-white accountid">Wallet: {window.localStorage.getItem("accountId")}</span>
-                           <span className="text-white accountid">Twitter: {window.localStorage.getItem("twitter-uid")}</span>
+                        <a  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`} target="_blank" className="text-white accountid">Wallet: {window.localStorage.getItem("accountId")}</a>
+                        <span className="text-white accountid">Twitter: {window.localStorage.getItem("twitter-uid")}</span>
                     </div>
                     )}
 
