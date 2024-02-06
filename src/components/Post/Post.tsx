@@ -397,7 +397,7 @@ export default function Post(){
       
           useEffect(()=>{
             if(authenticated){
-              setUserId(firebaseAuth.currentUser.providerData[0].uid)
+            //  setUserId(firebaseAuth.currentUser.providerData[0].uid)
             }
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
