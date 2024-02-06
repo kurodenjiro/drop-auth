@@ -141,32 +141,23 @@ export const onSignIn = async ({
      recoveryPK,
      actions:   addKeyActions
    })
-     .then((res) => res.json())
-     .then(async (res) => {
-       const failure = res['Receipts Outcome']
-         .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-       if (failure?.ActionError?.kind?.LackBalanceForState) {
-        window.location.reload();
-       } else {
-         await checkFirestoreReady();
+     await checkFirestoreReady();
           
-         if (!window.firestoreController) {
-           (window as any).firestoreController = new FirestoreController();
-         }
-         await window.firestoreController.addDeviceCollection({
-           fakPublicKey: onlyAddLak ? null : publicKeyFak,
-           lakPublicKey: public_key_lak,
-           gateway,
-         });
- 
-         setStatusMessage('Account recovered successfully!');
- 
-         if (publicKeyFak) {
-           window.localStorage.setItem('webauthn_username', email);
-         }
-         window.location.reload();
-       }
+     if (!window.firestoreController) {
+       (window as any).firestoreController = new FirestoreController();
+     }
+     await window.firestoreController.addDeviceCollection({
+       fakPublicKey: onlyAddLak ? null : publicKeyFak,
+       lakPublicKey: public_key_lak,
+       gateway,
      });
+
+     setStatusMessage('Account recovered successfully!');
+
+     if (publicKeyFak) {
+       window.localStorage.setItem('webauthn_username', email);
+     }
+     window.location.reload();
 };
 
 
