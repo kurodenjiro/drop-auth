@@ -229,6 +229,7 @@ function CreateMission() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [start, setStart] = useState("");
+  const [userId, setUserId] = useState("");
   const [end, setEnd] = useState("");
   const [link, setLink] = useState([]);
   const [action, setAction] = useState("");
@@ -287,7 +288,8 @@ function CreateMission() {
       action:action,
       timezone: timezone,
       amount: amount,
-      userIdToken:firebaseAuth.currentUser.getIdToken()
+      perform:false,
+      userCreated:userId
     } )
     .then(function (response) {
       console.log(response);
@@ -318,12 +320,11 @@ const signIn = async (authType) => {
   try {
     const {user} = await signInWithTwitterPopup();
     console.log("user",user);
-    firebaseAuth.currentUser
    // if (!user || !user.emailVerified) return;
     
     const accessToken = await user.getIdToken();
-    
-    const email = user.email;
+    setUserId(user.providerData[0].uid)
+    const email = user.providerData[0].uid;
     const success_url = window.location.origin;
 
     //check accounts

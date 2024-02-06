@@ -36,10 +36,18 @@ const dataSchema = new mongoose.Schema({
         required: true,
         type: String
     },
+    perform:{
+        required: true,
+        type: Boolean
+    },
     timezone:{
         type:String,
     },
     amount:{
+        required: true,
+        type: String
+    },
+    userCreated:{
         required: true,
         type: String
     }
@@ -70,6 +78,8 @@ app.post("/api/dropauth/postData",async(req,res,next)=>{
         end: req.body.end,
         backgroundCover:req.body.backgroundCover,
         action:req.body.action,
+        perform:req.body.perform,
+        userCreated:req.body.userCreated,
         link: req.body.link,
         timezone: req.body.timezone,
         amount: req.body.amount
