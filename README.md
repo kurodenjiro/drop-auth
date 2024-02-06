@@ -1,6 +1,6 @@
 ![Mzb5g8UA](https://github.com/kurodenjiro/drop-auth/assets/112561517/fc21b4ee-f0ef-4188-85e7-23fe7314073f)
 
-Video Demo: https://www.youtube.com/watch?v=BABdm6cjBH4 
+Video Demo: https://www.youtube.com/watch?v=vXNQwOeIIzo
 
 MPC
 Architecture: Social Account Integration: Implement social Auth protocols to allow secure and seamless integration with social media accounts (Google, Twitter,...) 

@@ -1,6 +1,13 @@
-import React,{useEffect, useState} from "react";
+import React,{useEffect, useState, CSSProperties} from "react";
 import axios from "axios";
+import CircleLoader from "react-spinners/CircleLoader"
 import { useAuthState } from '../../lib/useAuthState';
+const override: CSSProperties = {
+  display: "block",
+  margin: "0 auto",
+  borderColor: "red",
+  border: "2px soild #ffffff"
+}
 
 export default function Home(){
     const [data, setData] = useState([]);
@@ -25,9 +32,10 @@ export default function Home(){
           return str;
         }
       };
-    
+    console.log("data",data)
     return(
         <div className="background">
+            
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="container-fluid nav-format">
                 <a className="navbar-brand text-white text-decoration-none fs-4 font-weight-bold" href={window.location.origin+"/"}>Block Quest</a>
@@ -45,8 +53,8 @@ export default function Home(){
                     </ul>
                     {authenticated && (
                     <>
-                    <a  className="btn btn-outline-success text-white"  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`}  target="_blank" >{"Walllet:"+ window.localStorage.getItem("accountId")}</a>
-                    <button className="btn btn-outline-success text-white" >{"Twitter:"+ window.localStorage.getItem("twitter-uid")}</button>
+                     <a  href={`https://testnet.nearblocks.io/address/${window.localStorage.getItem("accountId")}`}  className="btn btn-outline-success text-white" >{"Walllet:"+ window.localStorage.getItem("accountId")}</a>
+                     <button className="btn btn-outline-success text-white" >{"Twitter:"+ window.localStorage.getItem("twitter-uid")}</button>
                     </>
                     )}
 
@@ -54,11 +62,20 @@ export default function Home(){
             </div>
             </nav>
             <div className="container py-5">
-                <div className="mb-3">
-                    <h3 className="text-white fs-3 text-center">Campain</h3>
+            <div className="mb-3">
+                    <h1 className="text-white fs-2 text-center">Campain</h1>
                 </div>
                 <div className="project-show ">
-                    {data&&data.map((dt,i)=>(
+                    {data.length==0?(<div className="format-loading">
+                        <CircleLoader
+                color={"#ffffff"}
+                loading={true}
+                cssOverride={override}
+                size={200}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+                    />
+                    </div>):data.map((dt,i)=>(
                         <a href={`/Post?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
                             <img src={dt.backgroundCover} className="card-img-top mt-2" alt="..."/>
                             <div className="card-body">

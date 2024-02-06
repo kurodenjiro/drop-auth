@@ -1,2 +1,0 @@
-Client ID = RjYxY2tjc3FNQlFWTXJCMmZ1Qmk6MTpjaQ
-Client Secret = 9WmAGlFm9qaY7jXCJU_qC4iey4b--sMSw851hAlxvVed45OCDN
