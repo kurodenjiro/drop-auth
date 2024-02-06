@@ -412,7 +412,7 @@ export default function Post(){
               const getData = async()=>{
                 let userId=""
                 if(authenticated){
-                  userId =  window.localStorage.getItem("twitter-uid")
+                   userId =  window.localStorage.getItem("twitter-uid")
                   setUserId(userId) 
                   const accountId =  window.localStorage.getItem("accountId")
                   setAccountId(accountId)
