@@ -199,7 +199,6 @@ export const onSignIn = async ({
   
 export default function Post(){
     const [searchParams] = useSearchParams();
-    const [data, setData] = useState([]);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [link, setLink] = useState([]);
@@ -420,7 +419,7 @@ const hanleSync = async() =>{
                             let isAction = false;
 
                             getAction.data.forEach(action => {
-                                if(link.id == action.id){
+                                if(link.link == action.link){
                                     isAction=true
                                 }
                             });
