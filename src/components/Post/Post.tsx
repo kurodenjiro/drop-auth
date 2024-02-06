@@ -396,10 +396,13 @@ export default function Post(){
             }
       
           useEffect(()=>{
+            if(authenticated){
+              setUserId(firebaseAuth.currentUser.providerData[0].uid)
+            }
               const getData = async()=>{
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
                   const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
-                  
+                  console.log("getAction",getAction.data)
                   if(getData.data){
                       Object.values(getData.data.data).map((dt:any)=>{
                           if(dt!=undefined && dt._id==mission_id){
@@ -417,7 +420,7 @@ export default function Post(){
                                   let isAction = false;
       
                                   getAction.data.forEach((action:any) => {
-                                      if(link.link == action.contentId){
+                                      if(link.link == action.contentId && action.userCreated == userId){
                                           isAction=true
                                       }
                                   });
@@ -506,7 +509,7 @@ export default function Post(){
                               <h3 className="fs-4 text-white">Mission</h3>
                               <div className="px-3 py-2">
                                   {link.map((lk,i)=>(
-                                      <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,"hunhan",lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
+                                      <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,userId,lk.id)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                                           <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
                                           </svg>
