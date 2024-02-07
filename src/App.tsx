@@ -10,7 +10,7 @@ import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Devices from './components/Devices/Devices';
 import Login from './components/Login/Login';
-import CreateMission from './components/CreateMission/CreateMission';
+import CreateCampaign from './components/CreateCampaign/CreateCampaign';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
@@ -72,7 +72,7 @@ export default function App() {
           <Route path="/">
             <Route index element={<Home />} />
             {/* <Route path="login" element={<Login />} /> */}
-            <Route path="create-mission" element={<CreateMission />} />
+            <Route path="create-campaign" element={<CreateCampaign />} />
             <Route path="post" element={<Post />} />
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />

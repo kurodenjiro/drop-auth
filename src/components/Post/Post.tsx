@@ -214,10 +214,10 @@ export default function Post(){
     const [backgroundCover, setBackgroundCover] = useState("");
     const [loading, setLoading] = useState(false);
     const { authenticated } = useAuthState();
-    const mission_id = searchParams.get("mission_id")
+    const campaign_id = searchParams.get("campaign_id")
     const [statusMessage, setStatusMessage] = useState<any>("");
     const [userId, setUserId] = useState("");
-    const [postId, setPostId] = useState(mission_id);
+    const [postId, setPostId] = useState(campaign_id);
     const [accountId, setAccountId] = useState("");
     
     const navigate = useNavigate();
@@ -408,7 +408,7 @@ export default function Post(){
                   console.log("getAction",postId,userId)
                   if(getData.data){
                       Object.values(getData.data.data).map((dt:any)=>{
-                          if(dt!=undefined && dt._id==mission_id){
+                          if(dt!=undefined && dt._id==campaign_id){
                               setName(dt.name);
                               setBackgroundCover(dt.backgroundCover);
                               setDescription(dt.description);
@@ -444,8 +444,6 @@ export default function Post(){
               getData()
           },[])
             
-          //console.log(name)
-          //console.log(searchParams.get("mission_id"));
           return(
               <div className="background " style={{height:loading?"100%":"100vh"}}>
                   <nav className="navbar navbar-expand-lg bg-body-tertiary">
@@ -460,7 +458,7 @@ export default function Post(){
                               <a className="nav-link active text-white text-decoration-none fs-6" href="/">Home</a>
                               </li>
                               <li className="nav-item text-decoration-none">
-                              <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
+                              <a className="nav-link text-white text-decoration-none fs-6" href="/create-campaign">Create Campaign</a>
                               </li>
                           </ul>
                           {authenticated ? (
@@ -512,7 +510,7 @@ export default function Post(){
                   <div className="row mt-2">
                       <div className="col-lg-7 mx-auto">
                           <div>
-                              <h3 className="fs-4 text-white">Mission</h3>
+                              <h3 className="fs-4 text-white">Campaign</h3>
                               <div className="px-3 py-2">
                               {postId && userId && link && link.map((lk,i)=>(
                                       <button  disabled={lk.disable} onClick={()=>checkTweetAction(lk.link,true,userId,postId)} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none"  key={i}>

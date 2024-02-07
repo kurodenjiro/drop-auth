@@ -48,7 +48,7 @@ export default function Home(){
                         <a className="nav-link active text-white text-decoration-none fs-6" href="/">Home</a>
                         </li>
                         <li className="nav-item text-decoration-none">
-                        <a className="nav-link text-white text-decoration-none fs-6" href="/create-mission">Create Mission</a>
+                        <a className="nav-link text-white text-decoration-none fs-6" href="/create-campaign">Create Campaign</a>
                         </li>
                     </ul>
                     {authenticated && (
@@ -63,7 +63,7 @@ export default function Home(){
             </nav>
             <div className="container py-5">
             <div className="mb-3">
-                    <h1 className="text-white fs-2 text-center">Campain</h1>
+                    <h1 className="text-white fs-2 text-center">Campaign List</h1>
                 </div>
                 <div className="project-show ">
                     {data.length==0?(<div className="format-loading">
@@ -76,7 +76,7 @@ export default function Home(){
                 data-testid="loader"
                     />
                     </div>):data.map((dt,i)=>(
-                        <a href={`/Post?mission_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
+                        <a href={`/Post?campaign_id=${dt._id}`} className="card card-format text-decoration-none" key={i}>
                             <img src={dt.backgroundCover} className="card-img-top mt-2" alt="..." width={"100px"}/>
                             <div className="card-body">
                                 <h3 className="card-title text-truncate">{dt.name}</h3>
