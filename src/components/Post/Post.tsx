@@ -577,8 +577,8 @@ export default function Post(){
                               <div className="px-3 py-2">
                               {authenticated ? (
                                 <>
-                            <button onClick={handleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
-                            <h3 className="text-sm text-white"> {claimed ? "Click to claim Reward" :"You have claimed reward"}</h3>
+                            <button onClick={handleSync} disabled={disableClaimed} className=" text-center btn btn-m btn-ms text-decoration-none"  >
+                            <h3 className="text-sm text-white"> {disableClaimed ?  "You have claimed reward" : "Click to claim Reward"}</h3>
                           </button>
                           <br/>
                           {claimed && <h3><a href={`https://testnet.nearblocks.io/nft-token/genadrop-test.mpadev.testnet/${claimed}`} target="_blank"> Your Claimed NFT </a></h3>}
