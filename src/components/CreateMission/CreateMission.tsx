@@ -252,12 +252,7 @@ function CreateMission() {
 
 
   useEffect(()=>{
-    if(authenticated){
-      const accountId = window.localStorage.getItem("accountId")
-      setAccountId(accountId)
-      const userId = window.localStorage.getItem("twitter-uid");
-      setUserId(userId)
-    }
+
     if(select=="like"){
       //https://twitter.com/0_bishi_7/status/1754587117966008752
       let tweet_id = defaultLink.split("/")[5]
@@ -283,7 +278,15 @@ function CreateMission() {
     }
     setAction(select)
   },[select])
-
+  
+  useEffect(()=>{
+    if(authenticated){
+      const accountId = window.localStorage.getItem("accountId")
+      setAccountId(accountId)
+      const userId = window.localStorage.getItem("twitter-uid");
+      setUserId(userId)
+    }
+  },[authenticated])
 
   const handleInsertData = async() =>{
     const res = await fetch('https://blockquest-api.vercel.app/api/dropauth', {
@@ -583,7 +586,7 @@ const hanleSync = async() =>{
 
   <div className="row">
     <div className="col-lg-7 mx-auto">
-    {!authenticated ? 
+    {authenticated ? 
         (
           <div className="form-format rounded-lg shadow-sm p-5">
             
