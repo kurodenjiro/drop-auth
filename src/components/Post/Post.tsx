@@ -219,6 +219,8 @@ export default function Post(){
     const [userId, setUserId] = useState("");
     const [postId, setPostId] = useState(campaign_id);
     const [accountId, setAccountId] = useState("");
+    const [claimed, setClaimed] = useState("");
+    const [disableClaimed, setDisableClaimed] = useState(false);
     
     const navigate = useNavigate();
 
@@ -307,7 +309,7 @@ export default function Post(){
             }
           )
         }else{
-          setStatusMessage("logging...")
+          setStatusMessage("Signin...Wait")
           window.localStorage.setItem("accountId",accountIds[0])
           await onSignIn(
             {
@@ -362,7 +364,23 @@ export default function Post(){
         const deposit = "50000000000000000000000";
 
         const tokenId = Date.now() + "";
-        (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
+        let dataClaim = JSON.stringify({
+          campaignId: campaign_id,
+          userCreated: userId
+        });
+        var requestOptions = {
+          method: 'POST',
+          body: dataClaim,
+        };
+        fetch("https://blockquest-api.vercel.app/api/postClaim", requestOptions)
+          .then(response => response.text())
+          .then(result => {
+            console.log(result) 
+          
+          })
+          .catch(error => console.log('error', error));
+
+         await window.fastAuthController.signAndSendDelegateActionWhitelist({
           receiverId :"genadrop-test.mpadev.testnet",
           actions: [
             functionCall(
@@ -381,7 +399,10 @@ export default function Post(){
             new BN(deposit))
             ]
         })
-         alert("claim successful")
+
+        setClaimed(tokenId)
+
+
 
       }
           const logout = async () => {
@@ -397,11 +418,21 @@ export default function Post(){
             let userId=""
             if(authenticated){
                userId =  window.localStorage.getItem("twitter-uid")
+               console.log("userId",userId)
               setUserId(userId) 
               const accountId =  window.localStorage.getItem("accountId")
               setAccountId(accountId)
             }
               const getData = async()=>{
+                const getClaimed = await axios('https://blockquest-api.vercel.app/api/getClaim',{method:"GET"})
+                console.log("getClaimed",getClaimed)
+                if(getClaimed.data){
+                  getClaimed.data.data.forEach(element => {
+                    if(element.userId == userId && element.campaignId == campaign_id){
+                      setDisableClaimed(true)
+                    }
+                  });
+                }
                   const getData = await axios('https://blockquest-api.vercel.app/api/dropauth',{method:"GET"})
                   const getAction = await axios('https://blockquest-api.vercel.app/api/dropauth/getAction',{method:"GET"})
                   console.log("getAction",postId,userId)
@@ -441,7 +472,7 @@ export default function Post(){
                   }
               }
               getData()
-          },[])
+          },[authenticated])
             
           return(
               <div className="background " style={{height:loading?"100%":"100vh"}}>
@@ -541,16 +572,21 @@ export default function Post(){
                   </div>
                   <div className="row mt-2">
                       <div className="col-lg-7 mx-auto">
-                          <div>
+                          <div className="pb-3">
                               <h3 className="fs-4 text-white">Claim Reward</h3>
                               <div className="px-3 py-2">
                               {authenticated ? (
+                                <>
                             <button onClick={handleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
-                            <h3 className="text-sm text-white">Claim</h3>
-                          
+                            <h3 className="text-sm text-white"> {claimed ? "Click to claim Reward" :"You have claimed reward"}</h3>
                           </button>
+                          <br/>
+                          {claimed && <h3><a href={`https://testnet.nearblocks.io/nft-token/genadrop-test.mpadev.testnet/${claimed}`} target="_blank"> Your Claimed NFT </a></h3>}
+                          
+                          </>
       
                   ):(
+                    <>
                     <button onClick={(e)=>signIn("twitter")} className="bg-transparent px-3 py-2 btn btn-m btn-ms text-decoration-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-caret-right-fill icon text-white" viewBox="0 0 16 16">
                     <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
@@ -560,6 +596,8 @@ export default function Post(){
                     </svg>
                     <span className="text-sm text-white">Login</span>
                 </button>
+                <h3 className="text-sm text-white pb-3">{statusMessage}</h3>
+                </>
                   )}
                             
                               </div>
