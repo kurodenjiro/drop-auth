@@ -155,7 +155,20 @@ export const onSignIn = async ({
      if (!window.firestoreController) {
        (window as any).firestoreController = new FirestoreController();
      }
-     window.location.reload();
+     
+
+               await window.firestoreController.addDeviceCollection({
+            fakPublicKey: onlyAddLak ? null : publicKeyFak,
+            lakPublicKey: public_key_lak,
+            gateway,
+          });
+  
+          setStatusMessage('Account recovered successfully!');
+  
+          if (publicKeyFak) {
+            window.localStorage.setItem('webauthn_username', email);
+          }
+          window.location.reload();
     //  await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
     //   oidcToken: accessToken,
     //   accountId,
