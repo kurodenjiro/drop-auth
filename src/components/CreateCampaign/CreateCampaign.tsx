@@ -74,7 +74,7 @@ const onCreateAccount = async ({
     oidcKeypair,
   });
   console.log("res.type",res)
-  if (res.type === 'err') return;
+  //if (res.type === 'err') return;
 
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
@@ -96,22 +96,22 @@ const onCreateAccount = async ({
   }
 
   setStatusMessage('Redirecting to app...');
+  window.location.reload();
+  //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
 
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-
-    await onSignIn({
-      accessToken,
-      publicKeyFak,
-      public_key_lak : recoveryPK,
-      contract_id,
-      methodNames,
-      setStatusMessage,
-      email,
-      gateway,
-      navigate,
-      accountId,
-      recoveryPK
-    })
+    // await onSignIn({
+    //   accessToken,
+    //   publicKeyFak,
+    //   public_key_lak : recoveryPK,
+    //   contract_id,
+    //   methodNames,
+    //   setStatusMessage,
+    //   email,
+    //   gateway,
+    //   navigate,
+    //   accountId,
+    //   recoveryPK
+    // })
 };
 
 export const onSignIn = async ({
@@ -155,18 +155,40 @@ export const onSignIn = async ({
      if (!window.firestoreController) {
        (window as any).firestoreController = new FirestoreController();
      }
-     await window.firestoreController.addDeviceCollection({
-       fakPublicKey: onlyAddLak ? null : publicKeyFak,
-       lakPublicKey: public_key_lak,
-       gateway,
-     });
-
-     setStatusMessage('Account recovered successfully!');
-
-     if (publicKeyFak) {
-       window.localStorage.setItem('webauthn_username', email);
-     }
      window.location.reload();
+    //  await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+    //   oidcToken: accessToken,
+    //   accountId,
+    //   recoveryPK,
+    //   actions:   addKeyActions
+    // })
+    //   .then((res) => res.json())
+    //   .then(async (res) => {
+    //     const failure = res['Receipts Outcome']
+    //       .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+    //     if (failure?.ActionError?.kind?.LackBalanceForState) {
+    //      window.location.reload();
+    //     } else {
+    //       await checkFirestoreReady();
+           
+    //       if (!window.firestoreController) {
+    //         (window as any).firestoreController = new FirestoreController();
+    //       }
+    //       await window.firestoreController.addDeviceCollection({
+    //         fakPublicKey: onlyAddLak ? null : publicKeyFak,
+    //         lakPublicKey: public_key_lak,
+    //         gateway,
+    //       });
+  
+    //       setStatusMessage('Account recovered successfully!');
+  
+    //       if (publicKeyFak) {
+    //         window.localStorage.setItem('webauthn_username', email);
+    //       }
+          
+    //     }
+    //   });
+      
 };
 
 
@@ -426,7 +448,7 @@ const signIn = async (authType) => {
    
     if (!accountIds.length) {
       let accountId : string;
-      setStatusMessage("Creating account")
+      setStatusMessage("Creating account... Wait")
       accountId = publicKeyFak.replace("ed25519:","").slice(0,8).replace(/[\W\d]/g, "").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
       await window.fastAuthController.setAccountId(accountId);
       setAccountId(accountId)
@@ -449,7 +471,7 @@ const signIn = async (authType) => {
         }
       )
     }else{
-      setStatusMessage("logging...")
+      setStatusMessage("Sign In... Wait")
       window.localStorage.setItem("accountId",accountIds[0])
       setAccountId(accountIds[0])
       await onSignIn(

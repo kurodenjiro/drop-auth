@@ -84,22 +84,22 @@ const onCreateAccount = async ({
   }
 
   setStatusMessage('Redirecting to app...');
+  window.location.reload();
+  //const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
 
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-
-    await onSignIn({
-      accessToken,
-      publicKeyFak,
-      public_key_lak : recoveryPK,
-      contract_id,
-      methodNames,
-      setStatusMessage,
-      email,
-      gateway,
-      navigate,
-      accountId,
-      recoveryPK
-    })
+    // await onSignIn({
+    //   accessToken,
+    //   publicKeyFak,
+    //   public_key_lak : recoveryPK,
+    //   contract_id,
+    //   methodNames,
+    //   setStatusMessage,
+    //   email,
+    //   gateway,
+    //   navigate,
+    //   accountId,
+    //   recoveryPK
+    // })
 };
 
 export const onSignIn = async ({
@@ -286,7 +286,7 @@ export default function Post(){
        
         if (!accountIds.length) {
           let accountId : string;
-    
+          setStatusMessage('Creating account ... Wait');
           accountId = publicKeyFak.replace("ed25519:","").toLocaleLowerCase() + `.${network.fastAuth.accountIdSuffix}`;
           await window.fastAuthController.setAccountId(accountId);
           window.localStorage.setItem("accountId",accountId)
@@ -353,7 +353,7 @@ export default function Post(){
           .catch(error => console.log('error', error));
       }
 
-      const hanleSync = async() =>{
+      const handleSync = async() =>{
         const accessToken = await firebaseAuth.currentUser.getIdToken()
         const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
         const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
@@ -364,7 +364,6 @@ export default function Post(){
         const tokenId = Date.now() + "";
         (window as any).fastAuthController.signAndSendDelegateActionWhitelist({
           receiverId :"genadrop-test.mpadev.testnet",
-          blockHeightTtl: 600,
           actions: [
             functionCall(
             "nft_mint",
@@ -546,7 +545,7 @@ export default function Post(){
                               <h3 className="fs-4 text-white">Claim Reward</h3>
                               <div className="px-3 py-2">
                               {authenticated ? (
-                            <button onClick={hanleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
+                            <button onClick={handleSync} className=" text-center btn btn-m btn-ms text-decoration-none"  >
                             <h3 className="text-sm text-white">Claim</h3>
                           
                           </button>
