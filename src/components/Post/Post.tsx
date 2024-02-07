@@ -356,6 +356,7 @@ export default function Post(){
       }
 
       const handleSync = async() =>{
+        setDisableClaimed(true)
         const accessToken = await firebaseAuth.currentUser.getIdToken()
         const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
         const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
@@ -364,21 +365,7 @@ export default function Post(){
         const deposit = "50000000000000000000000";
 
         const tokenId = Date.now() + "";
-        let dataClaim = JSON.stringify({
-          campaignId: campaign_id,
-          userCreated: userId
-        });
-        var requestOptions = {
-          method: 'POST',
-          body: dataClaim,
-        };
-        fetch("https://blockquest-api.vercel.app/api/postClaim", requestOptions)
-          .then(response => response.text())
-          .then(result => {
-            console.log(result) 
-          
-          })
-          .catch(error => console.log('error', error));
+       
 
          await window.fastAuthController.signAndSendDelegateActionWhitelist({
           receiverId :"genadrop-test.mpadev.testnet",
@@ -401,8 +388,24 @@ export default function Post(){
         })
 
         setClaimed(tokenId)
+        
+        let dataClaim = JSON.stringify({
+          campaignId: campaign_id,
+          userCreated: userId
+        });
+        var requestOptions = {
+          method: 'POST',
+          body: dataClaim,
+        };
+        fetch("https://blockquest-api.vercel.app/api/postClaim", requestOptions)
+          .then(response => response.text())
+          .then(result => {
+            console.log(result) 
+          
+          })
+          .catch(error => console.log('error', error));
 
-
+          
 
       }
           const logout = async () => {
