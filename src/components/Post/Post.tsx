@@ -220,6 +220,7 @@ export default function Post(){
     const [postId, setPostId] = useState(campaign_id);
     const [accountId, setAccountId] = useState("");
     const [claimed, setClaimed] = useState("");
+    const [claimedStatus, setClaimedStatus] = useState("");
     const [disableClaimed, setDisableClaimed] = useState(false);
     
     const navigate = useNavigate();
@@ -357,6 +358,7 @@ export default function Post(){
 
       const handleSync = async() =>{
         setDisableClaimed(true)
+        setClaimedStatus("Claiming reward ...")
         const accessToken = await firebaseAuth.currentUser.getIdToken()
         const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
         const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`).then((res) => res.json())
@@ -365,7 +367,7 @@ export default function Post(){
         const deposit = "50000000000000000000000";
 
         const tokenId = Date.now() + "";
-       
+        
 
          await window.fastAuthController.signAndSendDelegateActionWhitelist({
           receiverId :"genadrop-test.mpadev.testnet",
@@ -386,8 +388,7 @@ export default function Post(){
             new BN(deposit))
             ]
         })
-
-        setClaimed(tokenId)
+        
         
         let dataClaim = JSON.stringify({
           campaignId: campaign_id,
@@ -405,7 +406,8 @@ export default function Post(){
           })
           .catch(error => console.log('error', error));
 
-          
+          setClaimedStatus("You have successfully claimed the reward")
+        setClaimed(tokenId)
 
       }
           const logout = async () => {
@@ -584,7 +586,7 @@ export default function Post(){
                             <h3 className="text-sm text-white"> {disableClaimed ?  "You have claimed reward" : "Click to claim Reward"}</h3>
                           </button>
                           <br/>
-                          {claimed && <h3><a href={`https://testnet.nearblocks.io/nft-token/genadrop-test.mpadev.testnet/${claimed}`} target="_blank"> Your Claimed NFT </a></h3>}
+                          {disableClaimed && <h3><a href={`https://testnet.nearblocks.io/nft-token/genadrop-test.mpadev.testnet/${claimed}`} target="_blank"> {claimedStatus} </a></h3>}
                           
                           </>
       
